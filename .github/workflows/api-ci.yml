@@ -1,0 +1,277 @@
+# Intégration continue de l'API FastAPI (cahier des charges §6.2, pipeline « api-ci »).
+#
+# Étapes : installation → Ruff → pytest avec couverture (PostgreSQL 16 + pgvector) → Bandit → pip-audit,
+# puis démarrage réel de l'API en mode production (migrations Alembic + /health).
+#
+# Le workflow se déclenche sur TOUTES les PR : le job `changes` saute les étapes coûteuses si /api
+# n'est pas modifié. Un job sauté compte comme réussi, et le contrôle final « api-ci » est donc
+# toujours rapporté : il peut être exigé par le ruleset de `main` sans bloquer les PR web/mobile.
+
+name: api-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.11" # version minimale exigée par le cahier (et par FastAPI 0.165)
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_INPUT: "1"
+
+jobs:
+  changes:
+    name: Détection des changements
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read # liste des fichiers modifiés de la PR
+    outputs:
+      api: ${{ github.event_name != 'pull_request' || steps.filter.outputs.api == 'true' }}
+    steps:
+      - name: Fichiers modifiés par la PR
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+              - '.github/workflows/api-ci.yml'
+
+  quality:
+    name: Analyse statique et sécurité
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+
+      - name: Installation des dépendances
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Ruff (lint)
+        run: ruff check --output-format=github .
+
+      - name: Ruff (format)
+        run: ruff format --check .
+
+      - name: Bandit (toutes gravités)
+        run: bandit -r app
+
+      - name: pip-audit (dépendances d'exécution et de développement)
+        run: pip-audit -r requirements-dev.txt --progress-spinner off
+
+  tests:
+    name: Tests et couverture (PostgreSQL 16 + pgvector)
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test # base jetable du runner, jamais exposée hors du job
+          POSTGRES_DB: quincaillerie_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d quincaillerie_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://test:test@localhost:5433/quincaillerie_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+
+      - name: Installation des dépendances
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Vérifier PostgreSQL 16 et l'extension pgvector
+        shell: python
+        run: |
+          import os
+          from sqlalchemy import create_engine, text
+
+          with create_engine(os.environ["TEST_DATABASE_URL"]).connect() as conn:
+              version = conn.execute(text("SHOW server_version")).scalar_one()
+              vector = conn.execute(
+                  text("SELECT default_version FROM pg_available_extensions WHERE name = 'vector'")
+              ).scalar_one_or_none()
+          print(f"PostgreSQL {version} · pgvector disponible : {vector}")
+          assert version.startswith("16."), f"PostgreSQL 16 attendu, obtenu {version}"
+          assert vector, "Extension pgvector introuvable"
+
+      - name: pytest avec couverture
+        run: >-
+          python -m pytest -p no:cacheprovider
+          --cov --cov-report=term-missing --cov-report=xml:coverage.xml
+          --junitxml=pytest-report.xml
+
+      - name: Publier les rapports de tests et de couverture
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-test-reports
+          path: |
+            api/coverage.xml
+            api/pytest-report.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+  startup:
+    name: Démarrage de l'API (mode production)
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: api
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app # base jetable du runner, jamais exposée hors du job
+          POSTGRES_DB: quincaillerie
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d quincaillerie"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: production # active les garde-fous de config.py (secret fort, CORS sans '*', HSTS)
+      DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/quincaillerie
+      CORS_ORIGINS: https://ci.invalid
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+
+      # Uniquement les dépendances d'exécution : prouve que la production n'a pas besoin des outils de dev.
+      - name: Installation des dépendances d'exécution
+        run: python -m pip install -r requirements.txt
+
+      - name: Générer des secrets éphémères (masqués dans les journaux)
+        shell: python
+        run: |
+          import os
+          import secrets
+
+          from cryptography.fernet import Fernet
+
+          values = {
+              "SECRET_KEY": secrets.token_urlsafe(48),
+              "MFA_ENCRYPTION_KEY": Fernet.generate_key().decode(),
+          }
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              for name, value in values.items():
+                  print(f"::add-mask::{value}")
+                  env_file.write(f"{name}={value}\n")
+
+      - name: Migrations Alembic (upgrade head)
+        run: |
+          alembic upgrade head
+          current="$(alembic current 2>/dev/null | awk '{print $1}')"
+          head="$(alembic heads 2>/dev/null | awk '{print $1}')"
+          echo "Révision appliquée : ${current} · révision head : ${head}"
+          test -n "${head}" && test "${current}" = "${head}"
+
+      - name: Démarrer uvicorn et vérifier /health, HSTS et OpenAPI
+        run: |
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          echo $! > uvicorn.pid
+          for _ in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8000/health > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --show-error --fail --dump-header health.headers http://127.0.0.1:8000/health > health.json
+          echo "Réponse /health : $(cat health.json)"
+          python -c "import json; assert json.load(open('health.json')) == {'status': 'ok'}"
+          grep -qi '^strict-transport-security:' health.headers || { echo "HSTS absent : mode production non actif"; exit 1; }
+          curl --silent --show-error --fail http://127.0.0.1:8000/openapi.json > openapi.json
+          python -c "import json; d = json.load(open('openapi.json')); assert d['info']['title']; print(len(d['paths']), 'routes publiées')"
+
+      - name: Journal du serveur
+        if: always()
+        run: |
+          if [ -f uvicorn.pid ]; then kill "$(cat uvicorn.pid)" 2>/dev/null || true; fi
+          cat uvicorn.log 2>/dev/null || true
+
+      - name: Publier le contrat OpenAPI généré
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-openapi
+          path: api/openapi.json
+          retention-days: 14
+
+  result:
+    # Contrôle unique à exiger dans le ruleset de `main`.
+    name: api-ci
+    needs: [changes, quality, tests, startup]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Synthèse des jobs
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+          import sys
+
+          results = {job: data["result"] for job, data in json.loads(os.environ["NEEDS"]).items()}
+          for job, result in results.items():
+              print(f"{job}: {result}")
+          # La détection doit réussir; les autres jobs doivent réussir ou être sautés (PR sans /api).
+          ok = results.get("changes") == "success" and all(
+              results.get(job) in ("success", "skipped") for job in ("quality", "tests", "startup")
+          )
+          sys.exit(0 if ok else 1)
