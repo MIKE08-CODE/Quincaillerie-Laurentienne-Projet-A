@@ -1,0 +1,12 @@
+# CODEOWNERS — à compléter avec les identifiants GitHub de l'équipe.
+# Syntaxe : <motif> <propriétaire1> <propriétaire2>
+# Les lignes ci-dessous sont des exemples commentés.
+#
+# *            <proprietaire-par-defaut>
+# /api/        <equipe-backend>
+# /web/        <equipe-frontend>
+# /mobile/     <equipe-mobile>
+# /desktop/    <equipe-desktop>
+# /rag/        <equipe-ia>
+# /docs/       <equipe-docs>
+# /.github/    <equipe-devops>

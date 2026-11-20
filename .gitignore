@@ -1,0 +1,56 @@
+# ===== Environnement / secrets =====
+.env
+.env.*
+!.env.example
+
+# ===== OS / IDE =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ===== Python (api/, rag/) =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# ===== Node (web/, mobile/) =====
+node_modules/
+dist/
+build/
+coverage/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Expo / React Native (mobile/) =====
+.expo/
+.expo-shared/
+web-build/
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# ===== .NET / WPF (desktop/) =====
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+
+# ===== RAG =====
+rag/sources/raw/
+rag/**/*.index
+rag/**/vectorstore/
