@@ -18,7 +18,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, Se
 
 from app.models import UserRole
 
-EXAMPLE_PASSWORD = "Rivière-Pelle-Écrou-42"  # noqa: S105 — exemple affiché dans Swagger
+EXAMPLE_PASSWORD = "Rivière-Pelle-Écrou-42"  # noqa: S105 — exemple affiché dans Swagger  # nosec B105
 
 
 def _strip(value: object) -> object:

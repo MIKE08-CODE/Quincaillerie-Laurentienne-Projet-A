@@ -33,7 +33,7 @@ class RefreshToken(Base):
 
 class OneTimeTokenPurpose(str, enum.Enum):
     EMAIL_VERIFICATION = "email_verification"  # A-AUTH-01
-    PASSWORD_RESET = "password_reset"  # noqa: S105 — nom d'usage (A-AUTH-04), pas un secret
+    PASSWORD_RESET = "password_reset"  # noqa: S105 — nom d'usage (A-AUTH-04), pas un secret  # nosec B105
 
 
 class OneTimeToken(Base):

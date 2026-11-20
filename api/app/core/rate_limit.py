@@ -18,6 +18,6 @@ limiter = Limiter(key_func=get_remote_address, enabled=get_settings().rate_limit
 # Limites des points de terminaison sensibles.
 LOGIN_LIMIT = "10/minute"
 REGISTER_LIMIT = "5/minute"
-PASSWORD_FORGOT_LIMIT = "5/minute"  # noqa: S105 — une limite, pas un mot de passe
-TOKEN_SUBMIT_LIMIT = "10/minute"  # noqa: S105 — vérif. courriel, réinitialisation, codes MFA
+PASSWORD_FORGOT_LIMIT = "5/minute"  # noqa: S105 — une limite, pas un mot de passe  # nosec B105
+TOKEN_SUBMIT_LIMIT = "10/minute"  # noqa: S105 — courriel, réinitialisation, codes MFA  # nosec B105
 REFRESH_LIMIT = "30/minute"

@@ -16,12 +16,12 @@ logger = logging.getLogger("app.security")
 # Événements à surveiller (niveau WARNING) : un pic peut signaler une attaque.
 LOGIN_FAILED = "login_failed"
 ACCOUNT_LOCKED = "account_locked"
-REFRESH_TOKEN_REUSE = "refresh_token_reuse_detected"  # vol probable d'un jeton
+REFRESH_TOKEN_REUSE = "refresh_token_reuse_detected"  # vol probable d'un jeton  # nosec B105
 MFA_FAILED = "mfa_failed"
 
 # Événements normaux mais sensibles (niveau INFO), utiles pour reconstituer un incident.
-PASSWORD_RESET_REQUESTED = "password_reset_requested"
-PASSWORD_RESET_COMPLETED = "password_reset_completed"
+PASSWORD_RESET_REQUESTED = "password_reset_requested"  # nom d'événement, pas un secret  # nosec B105
+PASSWORD_RESET_COMPLETED = "password_reset_completed"  # nom d'événement, pas un secret  # nosec B105
 MFA_ENABLED = "mfa_enabled"
 
 _WARNINGS = {LOGIN_FAILED, ACCOUNT_LOCKED, REFRESH_TOKEN_REUSE, MFA_FAILED}
