@@ -1,0 +1,22 @@
+# Faux positifs Gitleaks connus, ignorés un par un (issue #22).
+#
+# Les 6 entrées ci-dessous visent la règle generic-api-key sur un mot de passe FACTICE et
+# volontairement erroné, utilisé uniquement par les tests d'authentification de l'API
+# (A-AUTH-02, A-AUTH-07) : connexion refusée avec un mauvais mot de passe et journalisation
+# des échecs sans données personnelles. Cette valeur n'existe que dans api/tests/, sur une
+# base de test jetable ; elle n'est utilisée par aucun compte ni aucun environnement réel.
+#
+# Format (Gitleaks 8.30.1) : commit:fichier:règle:ligne. Chaque entrée ignore UNE seule
+# occurrence dans UN seul commit : toute nouvelle détection, même de la même valeur dans un
+# autre commit ou à une autre ligne, reste bloquante. Aucune règle n'est désactivée.
+# Analyse : scan complet de l'historique (13 commits) du 2026-11-21 avec Gitleaks 8.30.1.
+
+# Commit d'origine de la branche feature/1-authentification (test(auth), de4aa99).
+de4aa9918aa31abfef23cf92049b3893b52f6005:api/tests/test_tokens.py:generic-api-key:57
+de4aa9918aa31abfef23cf92049b3893b52f6005:api/tests/test_tokens.py:generic-api-key:58
+de4aa9918aa31abfef23cf92049b3893b52f6005:api/tests/test_security_hardening.py:generic-api-key:165
+
+# Commit squashé de la PR #21 sur main (a17a6f8).
+a17a6f87f7aa68aa3c5a720619a86aecbc5534ea:api/tests/test_tokens.py:generic-api-key:57
+a17a6f87f7aa68aa3c5a720619a86aecbc5534ea:api/tests/test_tokens.py:generic-api-key:58
+a17a6f87f7aa68aa3c5a720619a86aecbc5534ea:api/tests/test_security_hardening.py:generic-api-key:165
