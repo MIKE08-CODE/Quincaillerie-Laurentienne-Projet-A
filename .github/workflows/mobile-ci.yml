@@ -1,0 +1,106 @@
+# Intégration continue de l'application mobile React Native + Expo (cahier des charges §6.2).
+#
+# Étapes : npm ci → vérification des types → tests Jest (jest-expo) → bundle Android de production
+# (expo export, sans compte Expo ni service externe) → audit des dépendances.
+#
+# Audit : contrôle CIBLÉ (scripts/audit-check.mjs), sans exception globale. Il échoue sur tout avis
+# élevé ou critique, sur tout avis non documenté, et sur les deux avis modérés documentés (glob,
+# minimatch : outillage CLI d'Expo et de Jest, non embarqué) après leur date de réévaluation.
+
+name: mobile-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  changes:
+    name: Détection des changements
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      mobile: ${{ github.event_name != 'pull_request' || steps.filter.outputs.mobile == 'true' }}
+    steps:
+      - name: Fichiers modifiés par la PR
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            mobile:
+              - 'mobile/**'
+              - '.github/workflows/mobile-ci.yml'
+
+  build:
+    name: Types, tests et bundle Android
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Installation reproductible (package-lock.json)
+        run: npm ci --no-fund
+
+      - name: Vérification des types (TypeScript)
+        run: npm run typecheck
+
+      - name: Tests (Jest)
+        run: npm test
+
+      - name: Bundle Android de production (Metro)
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.invalid/api/v1 # valeur factice : vérifie seulement la compilation
+        run: npx expo export --platform android --output-dir "${RUNNER_TEMP}/expo-export"
+
+      - name: Audit des dépendances (exceptions ciblées et datées, voir l'en-tête)
+        run: npm run audit:check
+
+  result:
+    name: mobile-ci
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Synthèse des jobs
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+          import sys
+
+          results = {job: data["result"] for job, data in json.loads(os.environ["NEEDS"]).items()}
+          for job, result in results.items():
+              print(f"{job}: {result}")
+          ok = results.get("changes") == "success" and results.get("build") in ("success", "skipped")
+          sys.exit(0 if ok else 1)

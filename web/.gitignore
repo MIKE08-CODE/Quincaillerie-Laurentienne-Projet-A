@@ -1,0 +1,3 @@
+# Artefacts générés localement par TypeScript et Vitest
+*.tsbuildinfo
+coverage/

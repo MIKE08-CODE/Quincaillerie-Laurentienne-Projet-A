@@ -1,0 +1,61 @@
+{
+  "brand": "Quincaillerie Laurentienne",
+  "tagline": "Trois magasins dans les Laurentides depuis 1978",
+  "nav": { "home": "Accueil", "catalog": "Catalogue", "stores": "Magasins" },
+  "language": { "switch": "English", "label": "Changer la langue" },
+  "search": {
+    "label": "Rechercher un produit",
+    "placeholder": "Perceuse, équerre, drill…",
+    "submit": "Rechercher",
+    "title": "Résultats pour « {{q}} »",
+    "empty": "Aucun produit ne correspond à « {{q}} ».",
+    "prompt": "Saisissez un mot pour lancer la recherche, en français ou en anglais."
+  },
+  "home": {
+    "title": "Tout pour vos projets, près de chez vous",
+    "intro": "Consultez le catalogue et la disponibilité dans nos magasins de Saint-Jérôme, Sainte-Agathe-des-Monts et Mont-Tremblant.",
+    "categories": "Parcourir par catégorie",
+    "newest": "Nouveautés",
+    "seeAll": "Voir tout le catalogue"
+  },
+  "catalog": {
+    "title": "Catalogue",
+    "allCategories": "Toutes les catégories",
+    "categories": "Catégories",
+    "sort": "Trier par",
+    "sorts": {
+      "newest": "Nouveautés",
+      "price_asc": "Prix croissant",
+      "price_desc": "Prix décroissant",
+      "name_asc": "Nom (A à Z)",
+      "name_desc": "Nom (Z à A)"
+    },
+    "count_one": "{{count}} produit",
+    "count_other": "{{count}} produits",
+    "empty": "Aucun produit dans cette catégorie."
+  },
+  "pagination": { "label": "Pagination", "previous": "Précédent", "next": "Suivant", "page": "Page {{page}} sur {{pages}}" },
+  "product": {
+    "sku": "SKU",
+    "brand": "Marque",
+    "specs": "Caractéristiques techniques",
+    "availability": "Disponibilité en magasin",
+    "noImage": "Image non disponible",
+    "back": "Retour au catalogue",
+    "notFound": "Ce produit est introuvable ou n'est plus offert.",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "status": { "in_stock": "En stock", "low_stock": "Stock faible", "out_of_stock": "Rupture" },
+  "stores": { "title": "Nos magasins", "hours": "Heures d'ouverture", "phone": "Téléphone" },
+  "days": { "mon": "Lundi", "tue": "Mardi", "wed": "Mercredi", "thu": "Jeudi", "fri": "Vendredi", "sat": "Samedi", "sun": "Dimanche" },
+  "state": {
+    "loading": "Chargement…",
+    "error": "Le service est momentanément indisponible. Réessayez dans un instant.",
+    "network_error": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "rate_limited": "Trop de requêtes. Réessayez dans un moment.",
+    "retry": "Réessayer"
+  },
+  "notFound": { "title": "Page introuvable", "back": "Retour à l'accueil" },
+  "footer": "© Quincaillerie Laurentienne — projet de démonstration, aucune vente réelle."
+}

@@ -1,0 +1,61 @@
+{
+  "brand": "Quincaillerie Laurentienne",
+  "tagline": "Three stores in the Laurentians since 1978",
+  "nav": { "home": "Home", "catalog": "Catalogue", "stores": "Stores" },
+  "language": { "switch": "Français", "label": "Change language" },
+  "search": {
+    "label": "Search for a product",
+    "placeholder": "Drill, square, perceuse…",
+    "submit": "Search",
+    "title": "Results for “{{q}}”",
+    "empty": "No product matches “{{q}}”.",
+    "prompt": "Type a word to search, in English or French."
+  },
+  "home": {
+    "title": "Everything for your projects, close to home",
+    "intro": "Browse the catalogue and check availability in our Saint-Jérôme, Sainte-Agathe-des-Monts and Mont-Tremblant stores.",
+    "categories": "Shop by category",
+    "newest": "New arrivals",
+    "seeAll": "See the full catalogue"
+  },
+  "catalog": {
+    "title": "Catalogue",
+    "allCategories": "All categories",
+    "categories": "Categories",
+    "sort": "Sort by",
+    "sorts": {
+      "newest": "Newest",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "name_asc": "Name (A to Z)",
+      "name_desc": "Name (Z to A)"
+    },
+    "count_one": "{{count}} product",
+    "count_other": "{{count}} products",
+    "empty": "No products in this category."
+  },
+  "pagination": { "label": "Pagination", "previous": "Previous", "next": "Next", "page": "Page {{page}} of {{pages}}" },
+  "product": {
+    "sku": "SKU",
+    "brand": "Brand",
+    "specs": "Specifications",
+    "availability": "In-store availability",
+    "noImage": "Image not available",
+    "back": "Back to the catalogue",
+    "notFound": "This product cannot be found or is no longer offered.",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "status": { "in_stock": "In stock", "low_stock": "Low stock", "out_of_stock": "Out of stock" },
+  "stores": { "title": "Our stores", "hours": "Opening hours", "phone": "Phone" },
+  "days": { "mon": "Monday", "tue": "Tuesday", "wed": "Wednesday", "thu": "Thursday", "fri": "Friday", "sat": "Saturday", "sun": "Sunday" },
+  "state": {
+    "loading": "Loading…",
+    "error": "The service is temporarily unavailable. Please try again shortly.",
+    "network_error": "Cannot reach the server. Check your connection.",
+    "rate_limited": "Too many requests. Please try again in a moment.",
+    "retry": "Try again"
+  },
+  "notFound": { "title": "Page not found", "back": "Back to home" },
+  "footer": "© Quincaillerie Laurentienne — demonstration project, no real sales."
+}
