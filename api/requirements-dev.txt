@@ -1,0 +1,9 @@
+# Outils de développement et de test (non installés en production).
+-r requirements.txt
+pytest==9.2.0
+pytest-cov==7.1.0
+httpx==0.28.1
+ruff==0.8.4
+# Sécurité (cahier §6.2, api-ci) : analyse statique du code et audit des dépendances.
+bandit==1.9.4
+pip-audit==2.10.1
