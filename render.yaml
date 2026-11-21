@@ -12,11 +12,12 @@ services:
     autoDeploy: true # déploiement automatique à chaque fusion sur main
     buildCommand: pip install -r requirements.txt
     # Migrations puis amorçage idempotent (aucune commande « pre-deploy » sur l'offre gratuite),
-    # puis l'API derrière le relais HTTPS de Render.
+    # puis l'API. SANS --proxy-headers : aucun en-tête de proxy envoyé par le client n'est cru; l'adresse
+    # du client pour la limitation de débit vient de CLIENT_IP_HEADER (écrit par Cloudflare devant Render).
     startCommand: >-
       alembic upgrade head &&
       python -m app.seed.seed_l1 --allow-production &&
-      uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
@@ -25,6 +26,17 @@ services:
         value: production
       - key: REFRESH_COOKIE_SAMESITE
         value: strict
+      # À VÉRIFIER après le premier déploiement (procédure §2) : un CF-Connecting-IP inventé ne doit pas
+      # contourner la limitation. Sinon, vider cette variable (adresse de connexion).
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip
+      # disabled tant qu'aucun fournisseur n'est configuré; brevo + EMAIL_FROM_ADDRESS + BREVO_API_KEY sinon.
+      - key: EMAIL_BACKEND
+        value: disabled
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL

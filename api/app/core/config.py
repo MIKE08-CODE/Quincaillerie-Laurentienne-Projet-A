@@ -4,6 +4,7 @@ Aucun secret n'est écrit dans le code (ENF-02) : `SECRET_KEY` et `DATABASE_URL`
 valeur par défaut, l'application refuse donc de démarrer s'ils sont absents.
 """
 
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -66,6 +67,29 @@ class Settings(BaseSettings):
     # Origines autorisées par CORS, séparées par des virgules (ENF-03).
     cors_origins: str = "http://localhost:5173"
 
+    # --- Courriels transactionnels (A-AUTH-01, A-AUTH-04) ---
+    # console : affichés dans le terminal (développement seulement : ils contiennent des jetons);
+    # memory : gardés en mémoire (tests); brevo : API HTTPS de Brevo (le SMTP sortant est bloqué
+    # sur l'offre gratuite de Render); disabled : aucun envoi, journalisé sans jeton ni lien.
+    # Non renseigné : console en développement, memory en test, disabled en production.
+    email_backend: Literal["console", "memory", "brevo", "disabled"] | None = None
+    email_from_address: str = ""  # expéditeur vérifié chez le fournisseur
+    email_from_name: str = "Quincaillerie Laurentienne"
+    brevo_api_key: SecretStr | None = None
+
+    # --- Adresse IP du client pour la limitation de débit (ENF-05) ---
+    # Vide (défaut) : adresse de la connexion TCP; AUCUN en-tête de proxy n'est cru.
+    # Sinon : nom d'UN en-tête écrit par un relais de confiance qui écrase la valeur envoyée par le
+    # client (p. ex. « cf-connecting-ip » derrière Cloudflare). X-Forwarded-For est refusé : les
+    # relais y AJOUTENT des adresses, si bien que sa première valeur peut être inventée par le client.
+    client_ip_header: str = ""
+
+    @property
+    def effective_email_backend(self) -> str:
+        if self.email_backend is not None:
+            return self.email_backend
+        return {"development": "console", "test": "memory"}.get(self.app_env, "disabled")
+
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"
@@ -75,10 +99,37 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @model_validator(mode="after")
+    def _check_client_ip_header(self) -> "Settings":
+        header = self.client_ip_header.strip().lower()
+        if header and not re.fullmatch(r"[a-z0-9-]{1,64}", header):
+            raise ValueError("CLIENT_IP_HEADER doit être un nom d'en-tête HTTP simple.")
+        if header in {"x-forwarded-for", "forwarded"}:
+            raise ValueError(
+                "CLIENT_IP_HEADER ne peut pas être X-Forwarded-For ni Forwarded (valeurs falsifiables)."
+            )
+        self.client_ip_header = header
+        return self
+
+    @model_validator(mode="after")
+    def _check_email_settings(self) -> "Settings":
+        if self.effective_email_backend == "brevo":
+            if self.brevo_api_key is None or not self.brevo_api_key.get_secret_value().strip():
+                raise ValueError("BREVO_API_KEY est obligatoire avec EMAIL_BACKEND=brevo.")
+            if "@" not in self.email_from_address:
+                raise ValueError(
+                    "EMAIL_FROM_ADDRESS (expéditeur vérifié) est obligatoire avec EMAIL_BACKEND=brevo."
+                )
+        return self
+
+    @model_validator(mode="after")
     def _check_production_safety(self) -> "Settings":
         """Bloque le démarrage en production si la configuration n'est pas sécuritaire."""
         if not self.is_production:
             return self
+        if self.effective_email_backend in {"console", "memory"}:
+            raise ValueError(
+                "EMAIL_BACKEND console/memory interdit en production (jetons dans les journaux)."
+            )
         key = self.secret_key.get_secret_value()
         if key.lower() in _PLACEHOLDER_SECRETS or len(key) < 32:
             raise ValueError("SECRET_KEY doit être une valeur aléatoire d'au moins 32 caractères.")
