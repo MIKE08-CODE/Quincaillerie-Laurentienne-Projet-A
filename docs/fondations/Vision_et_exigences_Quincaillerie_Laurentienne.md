@@ -3,7 +3,7 @@
 **Projet A — Quincaillerie Laurentienne | Plateforme de commerce omnicanal**
 
 > **Livrable :** L1 — Fondations (semaine 3)  
-> **Version documentaire :** 1.2 — révision du 21 novembre 2026  
+> **Version documentaire :** 1.3 — révision du 21 novembre 2026  
 > **Équipe :** [à compléter]  
 > **Responsable :** [à compléter]  
 > **Dépôt GitHub :** https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A  
@@ -16,6 +16,7 @@
 | 1.0 | 18 novembre 2026 | Document initial de vision et d’exigences | Proposition |
 | 1.1 | 19 novembre 2026 | Révision de travail : reformulation des récits et séparation des critères complémentaires | Non attestée |
 | 1.2 | 21 novembre 2026 | Corrections linguistiques, périmètre L1, traçabilité, critères mesurables, échéances et références | En attente |
+| 1.3 | 21 novembre 2026 | Liens vers les issues GitHub des exigences L1 ; état réel de la matrice L1 (PR #21, #29 à #33) | En attente |
 
 **Auteur(s), équipe, approbateur et date de signature :** à renseigner. Ce document est un support de validation, pas une attestation de réception du logiciel.
 
@@ -102,7 +103,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** un compte non vérifié ne peut pas passer de commande; l’horodatage du consentement est enregistré.
 - **Critères complémentaires proposés (à valider) :** Les champs nom, courriel, mot de passe et langue sont enregistrés; le consentement est explicite et horodaté; une vérification est envoyée.
 
-**Traçabilité :** `A-AUTH-01` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-01` · **MoSCoW :** Must · **Issue GitHub :** [#1](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/1) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-002 — A-AUTH-02 · Must
@@ -115,7 +116,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** jeton expiré → 401; le rafraîchissement fonctionne; un jeton révoqué est rejeté.
 - **Critères complémentaires proposés (à valider) :** La connexion délivre un accès de 15 minutes maximum et un rafraîchissement protégé par cookie httpOnly, Secure et SameSite; la déconnexion révoque le rafraîchissement.
 
-**Traçabilité :** `A-AUTH-02` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-02` · **MoSCoW :** Must · **Issue GitHub :** [#2](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/2) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-003 — A-AUTH-03 · Must
@@ -128,7 +129,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** mots de passe faibles refusés avec un message clair; aucun mot de passe en clair dans la BD ou les journaux.
 - **Critères complémentaires proposés (à valider) :** Les mots de passe de moins de 12 caractères ou courants sont refusés; les mots de passe sont hachés avec Argon2id.
 
-**Traçabilité :** `A-AUTH-03` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-03` · **MoSCoW :** Must · **Issue GitHub :** [#3](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/3) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-004 — A-AUTH-04 · Must
@@ -141,7 +142,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** la réutilisation du jeton échoue; aucune énumération d’utilisateurs.
 - **Critères complémentaires proposés (à valider) :** Le lien expire après 30 minutes et ne fonctionne qu’une fois; le message affiché ne révèle pas l’existence du compte.
 
-**Traçabilité :** `A-AUTH-04` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-04` · **MoSCoW :** Must · **Issue GitHub :** [#4](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/4) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-005 — A-AUTH-05 · Must
@@ -154,7 +155,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** tests automatisés pour chaque rôle sur chaque point de terminaison protégé.
 - **Critères complémentaires proposés (à valider) :** Les cinq rôles sont pris en charge; les opérations interdites retournent un refus; un commis ne peut pas agir pour un autre magasin.
 
-**Traçabilité :** `A-AUTH-05` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-05` · **MoSCoW :** Must · **Issue GitHub :** [#5](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/5) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-006 — A-AUTH-06 · Should
@@ -180,7 +181,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** démontré par un script de test.
 - **Critères complémentaires proposés (à valider) :** Un script simule cinq échecs successifs et vérifie le blocage ou délai progressif prévu.
 
-**Traçabilité :** `A-AUTH-07` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-AUTH-07` · **MoSCoW :** Must · **Issue GitHub :** [#6](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/6) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-008 — A-AUTH-08 · Could
@@ -208,7 +209,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** listes paginées (max. 50 par page); navigation par catégorie fonctionnelle sur le web et le mobile.
 - **Critères complémentaires proposés (à valider) :** La pagination est limitée à 50 produits par page; le tri par prix, nom et nouveauté et la navigation par catégories fonctionnent.
 
-**Traçabilité :** `A-CAT-01` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-CAT-01` · **MoSCoW :** Must · **Issue GitHub :** [#7](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/7) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-010 — A-CAT-02 · Must
@@ -221,7 +222,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** la disponibilité est calculée à partir des stocks réels, pas stockée comme texte.
 - **Critères complémentaires proposés (à valider) :** La fiche affiche nom et description FR/EN, SKU, prix, images et caractéristiques; le statut de stock est calculé depuis les quantités.
 
-**Traçabilité :** `A-CAT-02` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-CAT-02` · **MoSCoW :** Must · **Issue GitHub :** [#8](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/8) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-011 — A-CAT-03 · Must
@@ -234,7 +235,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 - **Critère du cahier :** « perceuse » et « drill » trouvent les perceuses; « equerre » trouve « équerre ».
 - **Critères complémentaires proposés (à valider) :** Les recherches « perceuse » et « drill » retrouvent les perceuses; « equerre » retrouve « équerre ». 
 
-**Traçabilité :** `A-CAT-03` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-CAT-03` · **MoSCoW :** Must · **Issue GitHub :** [#9](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/9) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-012 — A-CAT-04 · Should
@@ -557,7 +558,7 @@ Livraison à domicile et transporteurs; paiements réels; intégration au systè
 **Critères d’acceptation :**
 - **Critères complémentaires proposés (à valider) :** Les champs bilingues sont modifiables; les images sont contrôlées par type et taille; les opérations sont réservées aux administrateurs.
 
-**Traçabilité :** `A-ADM-01` · **MoSCoW :** Must · **Issue GitHub :** [à identifier / relier] · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
+**Traçabilité :** `A-ADM-01` · **MoSCoW :** Must · **Issue GitHub :** [#10](https://github.com/MIKE08-CODE/Quincaillerie-Laurentienne-Projet-A/issues/10) · **Estimation :** [à compléter] · **Jalon :** L1 — Fondations
 
 
 #### US-037 — A-ADM-02 · Must
@@ -787,16 +788,16 @@ La priorité **Must** désigne une obligation du produit complet; elle ne signif
 
 | Élément L1 | Exigences ou volume | Preuve de réception attendue | État documentaire |
 |---|---|---|---|
-| Authentification | A-AUTH-01 à 05 et A-AUTH-07 | Scénarios automatisés, routes et démonstration de connexion, vérification et contrôles d’accès | Implémentation rapportée; réception L1 à confirmer |
-| Catalogue | A-CAT-01 à 03 | Pagination ≤ 50, catégories, fiche bilingue, disponibilité calculée et recherche FR/EN sans accents | Preuves à produire |
-| Administration | A-ADM-01 | CRUD produits/catégories/marques, contrôle des images et autorisations | Preuves à produire |
-| Amorçage | 3 magasins, ≥ 150 produits et leurs stocks | Script rejouable, inventaire et requêtes de contrôle | Preuves à produire |
-| Client Web | Catalogue et fiche produit | URL déployée et scénario de consultation | Preuves à produire |
-| Client Mobile | Connexion à l’API en ligne et liste de produits | Démonstration sur simulateur ou appareil | Preuves à produire |
-| Client Bureau | Connexion à l’API en ligne et liste de produits | Démonstration Windows | Preuves à produire |
-| Incrément déployé | API et clients intégrés | URL(s), procédure et démonstration de bout en bout | Preuves à produire |
+| Authentification | A-AUTH-01 à 05 et A-AUTH-07 | Scénarios automatisés, routes et démonstration de connexion, vérification et contrôles d’accès | **Fusionné** sur `main` (PR #21) ; 119 tests ; non déployé ; envoi de courriels absent en production |
+| Catalogue | A-CAT-01 à 03 | Pagination ≤ 50, catégories, fiche bilingue, disponibilité calculée et recherche FR/EN sans accents | **En PR** #29 (API, CI verte) et #30 (web, CI verte) ; non fusionné, non déployé |
+| Administration | A-ADM-01 | CRUD produits/catégories/marques, contrôle des images et autorisations | **En PR** #29 (API ; images par URL https, téléversement non intégré) ; interface d’administration web non réalisée |
+| Amorçage | 3 magasins, ≥ 150 produits et leurs stocks | Script rejouable, inventaire et requêtes de contrôle | **En PR** #29 : 3 magasins, 157 produits, 471 lignes de stock ; idempotence testée localement |
+| Client Web | Catalogue et fiche produit | URL déployée et scénario de consultation | **En PR** #30 ; testé contre l’API locale ; URL déployée à compléter |
+| Client Mobile | Connexion à l’API en ligne et liste de produits | Démonstration sur simulateur ou appareil | **En PR** #31 ; client testé contre l’API locale ; démonstration sur appareil à faire |
+| Client Bureau | Connexion à l’API en ligne et liste de produits | Démonstration Windows | **En PR** #32 ; fenêtre lancée et connectée à l’API locale |
+| Incrément déployé | API et clients intégrés | URL(s), procédure et démonstration de bout en bout | **Non déployé** ; procédure préparée (PR #33) |
 
-**État documentaire ≠ conformité du logiciel.** La présence d’un récit dans ce document ne prouve pas que le code, le déploiement ou le test existent. Les éléments « preuves à produire » ne doivent être cochés qu’après vérification.
+**État mis à jour le 21 novembre 2026 à partir des PR réelles** (« en PR » = poussé, CI verte, non fusionné). **État documentaire ≠ conformité du logiciel.** La présence d’un récit dans ce document ne prouve pas que le code, le déploiement ou le test existent. Les éléments « preuves à produire » ne doivent être cochés qu’après vérification.
 
 ### 12.2 Traçabilité opérationnelle et critères de réception
 
