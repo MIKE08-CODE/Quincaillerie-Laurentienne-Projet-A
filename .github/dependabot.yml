@@ -1,7 +1,7 @@
 # Mises à jour automatiques des dépendances (cahier §4.1, §6.2 « security », annexe D A06).
-# Écosystèmes présents sur main : pip (/api) et GitHub Actions (/.github/workflows).
-# npm (/web, /mobile) et nuget (/desktop) seront ajoutés quand ces applications existeront :
-# une entrée pointant vers un dossier sans manifeste ferait échouer Dependabot.
+# Écosystèmes : pip (/api), npm (/web, /mobile), nuget (/desktop) et GitHub Actions.
+# À fusionner APRÈS les PR qui créent web/, mobile/ et desktop/ : une entrée pointant vers un dossier
+# sans manifeste ferait échouer Dependabot.
 version: 2
 updates:
   - package-ecosystem: pip
@@ -23,6 +23,87 @@ updates:
         update-types: [minor, patch]
         patterns: ["*"]
       python-securite:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Toronto
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      web-mineures:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+      web-securite:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # Le cahier impose React 18 pour le web : les montées majeures de React sont refusées.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /mobile
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Toronto
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      mobile-mineures:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+      mobile-securite:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # Expo fixe les versions compatibles de React Native et de ses modules : montées majeures
+      # uniquement par « npx expo install --fix » lors d'un changement de SDK décidé par l'équipe.
+      - dependency-name: "expo*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: nuget
+    directory: /desktop
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Toronto
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      desktop-mineures:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+      desktop-securite:
         applies-to: security-updates
         patterns: ["*"]
 

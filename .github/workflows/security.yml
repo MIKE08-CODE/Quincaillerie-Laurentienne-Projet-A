@@ -33,7 +33,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [python, actions]
+        # À fusionner APRÈS les PR web/mobile/desktop : CodeQL échoue si un langage n'a aucun fichier source.
+        language: [python, actions, javascript-typescript, csharp]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,7 +44,7 @@ jobs:
         uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           languages: ${{ matrix.language }}
-          build-mode: none # Python et workflows : aucune compilation nécessaire
+          build-mode: none # aucune compilation : Python, workflows, JS/TS et C# (extraction sans build)
           queries: security-extended
 
       - name: Analyser
