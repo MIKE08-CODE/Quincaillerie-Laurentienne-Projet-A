@@ -49,7 +49,7 @@ interface Page {
 
 describe("API réelle", () => {
   maybe("renvoie la liste paginée des produits et les catégories", async () => {
-    process.env.EXPO_PUBLIC_API_URL = url;
+    process.env.EXPO_PUBLIC_API_BASE_URL = url;
     globalThis.fetch = ((input: unknown) => nodeFetch(String(input))) as typeof fetch;
     jest.resetModules();
     const { getJson } = jest.requireActual<typeof import("../api/client")>("../api/client");

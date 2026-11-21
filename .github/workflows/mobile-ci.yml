@@ -78,7 +78,7 @@ jobs:
 
       - name: Bundle Android de production (Metro)
         env:
-          EXPO_PUBLIC_API_URL: https://api.example.invalid/api/v1 # valeur factice : vérifie seulement la compilation
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.invalid/api/v1 # valeur factice : vérifie seulement la compilation
         run: npx expo export --platform android --output-dir "${RUNNER_TEMP}/expo-export"
 
       - name: Audit des dépendances (seuil high, voir l'en-tête)

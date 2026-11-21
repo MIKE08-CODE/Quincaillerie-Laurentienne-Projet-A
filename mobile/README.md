@@ -22,7 +22,7 @@ React Native Testing Library.
 
 ## Configuration de l'URL de l'API par environnement
 
-L'URL est lue dans `EXPO_PUBLIC_API_URL` au moment du bundle (préfixe `/api/v1` inclus). Copier
+L'URL est lue dans `EXPO_PUBLIC_API_BASE_URL` au moment du bundle (préfixe `/api/v1` inclus). Copier
 `.env.example` en `.env.development` (utilisé par `expo start`) et `.env.production` (build de
 production). Ces fichiers ne sont pas versionnés.
 
@@ -40,7 +40,7 @@ n'y mettez jamais de secret.
 ```bash
 cd mobile
 npm ci
-cp .env.example .env.development   # puis ajuster EXPO_PUBLIC_API_URL
+cp .env.example .env.development   # puis ajuster EXPO_PUBLIC_API_BASE_URL
 npx expo start                     # QR code pour Expo Go, ou touche « a » pour l'émulateur Android
 ```
 
