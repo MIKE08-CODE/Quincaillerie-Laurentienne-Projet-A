@@ -69,9 +69,9 @@ Vérifications après le premier déploiement : `GET /health` → `{"status":"ok
 [`web/vercel.json`](../../web/vercel.json) : build Vite (`dist/`), repli SPA vers `index.html`, en-têtes
 de sécurité (CSP stricte, `nosniff`, `frame-ancestors 'none'`) et réécriture `/api/*` vers l'API.
 
-**Avant de relier le projet**, remplacer l'hôte volontairement invalide `api-a-configurer.invalid` par
-l'hôte réel de l'API Render. Tant que ce n'est pas fait, les appels `/api/*` échouent sans rien envoyer
-à un tiers.
+La réécriture vise l'API publique **`https://quincaillerie-laurentienne-api.onrender.com`** :
+`/api/:path*` → `https://quincaillerie-laurentienne-api.onrender.com/api/:path*`. Le navigateur reste sur
+le domaine Vercel (même origine) : pas de CORS ni de cookie tiers pour le web.
 
 Réglages Vercel : répertoire racine `web`, commande d'installation `npm ci`, aucune variable requise
 (`VITE_API_BASE_URL` vaut `/api/v1` par défaut). Déploiement automatique à chaque fusion sur `main`.
