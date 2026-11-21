@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Quincaillerie Laurentienne",
+    "slug": "quincaillerie-laurentienne",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1d5c3a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ca.quincaillerielaurentienne.mobile"
+    },
+    "android": {
+      "package": "ca.quincaillerielaurentienne.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-status-bar"]
+  }
+}
