@@ -40,7 +40,7 @@ Le fichier [`render.yaml`](../../render.yaml) décrit le service (Blueprint Rend
 
 - `rootDir: api`, build `pip install -r requirements.txt`, Python 3.11.
 - Démarrage : `alembic upgrade head` → `python -m app.seed.seed_l1 --allow-production` →
-  `uvicorn … --proxy-headers`. L'amorçage est **idempotent** : il ne crée rien s'il a déjà été appliqué.
+  `uvicorn` **sans** `--proxy-headers` (aucun en-tête de proxy envoyé par le client n'est cru). L'amorçage est **idempotent** : il ne crée rien s'il a déjà été appliqué.
 - Contrôle de santé : `/health`.
 - `autoDeploy: true` sur `main` : **chaque fusion sur `main` redéploie l'API** (déploiement automatique).
 
@@ -55,6 +55,10 @@ Variables à renseigner dans le tableau de bord Render (jamais dans Git) :
 | `CORS_ORIGINS` | URL du site Vercel (p. ex. `https://<projet>.vercel.app`) | Non |
 | `WEB_BASE_URL` | Même URL (liens des courriels) | Non |
 | `REFRESH_COOKIE_SAMESITE` | `strict` (le web appelle l'API par la réécriture Vercel, donc même origine) | Non |
+| `CLIENT_IP_HEADER` | `cf-connecting-ip` (déjà dans `render.yaml`) — **à vérifier** : un `CF-Connecting-IP` inventé, envoyé directement à l'URL Render, ne doit pas contourner la limitation ; sinon, vider la variable | Non |
+| `EMAIL_BACKEND` | `disabled` (déjà dans `render.yaml`) ; `brevo` une fois le fournisseur configuré | Non |
+| `EMAIL_FROM_ADDRESS` | Adresse d'expéditeur vérifiée chez Brevo | Non |
+| `BREVO_API_KEY` | Clé d'API transactionnelle Brevo | **Oui** |
 
 Vérifications après le premier déploiement : `GET /health` → `{"status":"ok"}` ; en-tête
 `Strict-Transport-Security` présent ; `GET /api/v1/products?size=1` → `total` ≥ 150 ;
@@ -98,8 +102,8 @@ preuve attendue pour l'artéfact 6 (« clients connectés à l'API en ligne »).
 
 | # | Sujet | Effet | Décision attendue |
 |---|---|---|---|
-| D1 | **Fournisseur de courriel** | En production, `email_service` lève `NotImplementedError` : l'inscription (A-AUTH-01) et la réinitialisation du mot de passe (A-AUTH-04) **échouent** | Choisir un fournisseur (offre gratuite) ou un mode de démonstration documenté |
-| D2 | **Adresse IP derrière deux relais** (Vercel puis Render) | La limitation de débit par IP peut voir l'adresse du relais au lieu de celle du visiteur : tous les visiteurs du web partageraient le même compteur | Vérifier l'en-tête `X-Forwarded-For` reçu et régler `--forwarded-allow-ips` |
+| D1 | **Fournisseur de courriel** | Corrigé côté code (F1) : un échec d'envoi n'interrompt plus la connexion et rien de secret n'est journalisé. **Sans fournisseur (`EMAIL_BACKEND=disabled`), aucun courriel de vérification ni de réinitialisation n'est remis** : A-AUTH-01 et A-AUTH-04 ne sont pas pleinement opérationnels en ligne. Le SMTP sortant est bloqué sur l'offre gratuite de Render : il faut une API HTTPS (Brevo prise en charge) | Créer un compte Brevo gratuit, vérifier un expéditeur, saisir la clé dans Render |
+| D2 | **Adresse IP du client** | Corrigé côté code (F2) : `X-Forwarded-For` n'est plus cru (il était falsifiable) ; seule une adresse IP valide dans `CLIENT_IP_HEADER` est retenue. Limite assumée : derrière Vercel, les visiteurs du web partagent l'adresse de sortie de Vercel | Vérifier après déploiement que `CF-Connecting-IP` n'est pas falsifiable par un accès direct à Render |
 | D3 | Extensions sur Neon | Migration impossible si `unaccent` ne peut pas être créée | Vérifier à l'étape 1 |
 | D4 | Mise en veille (offres gratuites) | Première requête lente après inactivité (Render) | Réveiller l'API avant la démonstration |
 | D5 | Amorçage en production | Données fictives de démonstration en production (voulu pour la L1) | Confirmer |

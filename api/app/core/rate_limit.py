@@ -5,15 +5,36 @@ Le verrouillage par compte, lui, est dans auth_service (il protège un compte pr
 
 Limites de ce stockage en mémoire : chaque processus a ses propres compteurs. Avec plusieurs
 instances en production, il faudra un stockage partagé (Redis) via `storage_uri`.
-Derrière un proxy (Render, Azure), lancer uvicorn avec `--proxy-headers` pour obtenir la vraie IP.
+
+Adresse du client : par défaut, l'adresse de la connexion TCP. Les en-têtes de proxy ne sont JAMAIS
+crus par défaut (uvicorn est lancé sans `--proxy-headers`) : un client pourrait sinon inventer
+`X-Forwarded-For` pour obtenir un nouveau compteur à chaque requête. Derrière un relais qui ÉCRASE un
+en-tête dédié (Cloudflare devant Render : `CF-Connecting-IP`), configurer `CLIENT_IP_HEADER`; la valeur
+n'est retenue que si c'est une adresse IP valide.
 """
+
+import ipaddress
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from starlette.requests import Request
 
 from app.core.config import get_settings
 
-limiter = Limiter(key_func=get_remote_address, enabled=get_settings().rate_limit_enabled)
+
+def client_ip(request: Request) -> str:
+    """Clé de la limitation de débit : en-tête de confiance configuré, sinon adresse de la connexion."""
+    header = get_settings().client_ip_header
+    if header:
+        value = request.headers.get(header, "").strip()
+        try:
+            return str(ipaddress.ip_address(value))
+        except ValueError:
+            pass  # en-tête absent ou invalide : on retombe sur l'adresse de la connexion
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=client_ip, enabled=get_settings().rate_limit_enabled)
 
 # Limites des points de terminaison sensibles.
 LOGIN_LIMIT = "10/minute"
