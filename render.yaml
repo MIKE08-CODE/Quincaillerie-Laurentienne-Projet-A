@@ -1,0 +1,37 @@
+# Blueprint Render de l'API (PRÉPARÉ, NON ACTIVÉ) — voir docs/deploiement/deploiement-l1.md.
+# Ce fichier n'a aucun effet tant qu'un Blueprint n'est pas créé dans Render par le responsable.
+# Aucun secret ici : DATABASE_URL, MFA_ENCRYPTION_KEY, CORS_ORIGINS et WEB_BASE_URL se saisissent dans
+# le tableau de bord (sync: false); SECRET_KEY est générée par Render.
+services:
+  - type: web
+    name: quincaillerie-laurentienne-api
+    runtime: python
+    plan: free
+    rootDir: api
+    branch: main
+    autoDeploy: true # déploiement automatique à chaque fusion sur main
+    buildCommand: pip install -r requirements.txt
+    # Migrations puis amorçage idempotent (aucune commande « pre-deploy » sur l'offre gratuite),
+    # puis l'API derrière le relais HTTPS de Render.
+    startCommand: >-
+      alembic upgrade head &&
+      python -m app.seed.seed_l1 --allow-production &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.18"
+      - key: APP_ENV
+        value: production
+      - key: REFRESH_COOKIE_SAMESITE
+        value: strict
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: WEB_BASE_URL
+        sync: false
