@@ -1,0 +1,44 @@
+# Mises à jour automatiques des dépendances (cahier §4.1, §6.2 « security », annexe D A06).
+# Écosystèmes présents sur main : pip (/api) et GitHub Actions (/.github/workflows).
+# npm (/web, /mobile) et nuget (/desktop) seront ajoutés quand ces applications existeront :
+# une entrée pointant vers un dossier sans manifeste ferait échouer Dependabot.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Toronto
+    cooldown:
+      default-days: 3 # une nouvelle version n'est proposée qu'après 3 jours (protection chaîne d'approvisionnement)
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope # -> « chore(deps): … » ou « chore(deps-dev): … »
+    groups:
+      python-mineures:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+      python-securite:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Toronto
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci
+      include: scope # -> « ci(deps): … »
+    groups:
+      actions:
+        patterns: ["*"]
