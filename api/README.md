@@ -13,6 +13,7 @@ API REST de Quincaillerie Laurentienne.
 | `app/services/` | Logique métier |
 | `app/repositories/` | Accès aux données |
 | `app/db/` | Session, moteur, base déclarative |
+| `app/seed/` | Données d'amorçage du L1 (`python -m app.seed.seed_l1`) |
 | `alembic/versions/` | Migrations de schéma |
 | `tests/` | Tests |
 
@@ -32,8 +33,9 @@ cd api
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-# 3. Base de données
+# 3. Base de données (PostgreSQL 16 ; l'extension unaccent est créée par la migration)
 alembic upgrade head
+python -m app.seed.seed_l1          # données de démonstration L1 (idempotent : relançable)
 
 # 4. Serveur
 uvicorn app.main:app --reload
@@ -74,6 +76,26 @@ Toutes les routes sont sous `/api/v1/auth`.
 
 Les erreurs ont toujours la forme `{"detail": {"code": "...", "message": "..."}}`. Le web et le
 mobile traduisent le `code` en FR/EN.
+
+## Catalogue (A-CAT-01 à 03, A-ADM-01)
+
+Détails : [`docs/architecture/catalogue-l1.md`](../docs/architecture/catalogue-l1.md).
+
+| Route | Accès | Exigence |
+|---|---|---|
+| `GET /api/v1/categories` · `GET /api/v1/stores` | Public | A-CAT-01, A-CAT-02 |
+| `GET /api/v1/products` (`page`, `size` ≤ 50, `sort`, `category_id`, `brand_id`) | Public | A-CAT-01 |
+| `GET /api/v1/products/{id}` · `GET /api/v1/products/{id}/availability` | Public | A-CAT-02 |
+| `GET /api/v1/search?q=` (FR/EN, sans accents) | Public | A-CAT-03 |
+| `/api/v1/admin/products`, `/admin/categories`, `/admin/brands` (PATCH, désactivation) | Administrateur + MFA | A-ADM-01 |
+
+Démonstration rapide, une fois l'API lancée et la base amorcée :
+
+```bash
+curl "http://localhost:8000/api/v1/products?size=5&sort=price_asc"
+curl "http://localhost:8000/api/v1/search?q=equerre"
+curl "http://localhost:8000/api/v1/search?q=drill"
+```
 
 **Protéger une nouvelle route** : utiliser les dépendances de `app/api/deps.py`
 (`get_current_user`, `require_roles(...)`, `require_store_access`, `require_verified_email`), puis
