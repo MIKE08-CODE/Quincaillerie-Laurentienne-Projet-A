@@ -53,12 +53,15 @@ API_INTEGRATION_URL=http://localhost:8000/api/v1 npm test -- api.integration   #
 npx expo export --platform android --output-dir /tmp/expo-export               # bundle de production
 ```
 
-Le workflow `mobile-ci` exécute les types, les tests, le bundle Android et `npm audit --audit-level=high`.
+Le workflow `mobile-ci` exécute les types, les tests, le bundle Android et `npm run audit:check`.
 
-**Exception d'audit documentée** (2026-11-21) : 3 vulnérabilités modérées (`glob`
-GHSA-3g3m-2fjr-6pw4, `minimatch` GHSA-g3hv-75wg-m249) dans l'outillage en ligne de commande d'Expo et
-de Jest, qui n'est pas embarqué dans l'application installée. La seule correction proposée par npm est
-une rétrogradation vers Expo 52 : à réévaluer à chaque mise à jour d'Expo.
+**Audit ciblé, sans exception globale** (`scripts/audit-check.mjs`) : le contrôle échoue sur toute
+vulnérabilité élevée ou critique et sur tout avis non documenté. Deux avis **modérés** sont tolérés
+nommément, jusqu'au **2026-12-21** (date de réévaluation obligatoire) : `glob` GHSA-3g3m-2fjr-6pw4 et
+`minimatch` GHSA-g3hv-75wg-m249, présents dans l'outillage en ligne de commande d'Expo et de Jest, qui
+n'est pas embarqué dans l'application installée. Réévaluation du 2026-11-21 : aucune version d'Expo SDK
+58 ne les corrige ; npm ne propose qu'une rétrogradation vers Expo 52 ou des montées majeures de `glob`
+et `minimatch` dans les dépendances d'Expo, écartées sans validation.
 
 **Non vérifié dans ce dépôt** : exécution sur un appareil ou un émulateur (aucun émulateur dans
 l'environnement de développement utilisé) ; la compilation du bundle Android et l'appel de l'API réelle

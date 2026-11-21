@@ -3,10 +3,9 @@
 # Étapes : npm ci → vérification des types → tests Jest (jest-expo) → bundle Android de production
 # (expo export, sans compte Expo ni service externe) → audit des dépendances.
 #
-# Audit : seuil « high ». Au 2026-11-21, `npm audit` signale 3 vulnérabilités MODÉRÉES (glob,
-# minimatch) dans l'outillage en ligne de commande d'Expo et de Jest, non embarqué dans l'application;
-# la seule correction proposée est une rétrogradation vers Expo 52. Exception documentée dans
-# mobile/README.md, à réévaluer à chaque mise à jour d'Expo.
+# Audit : contrôle CIBLÉ (scripts/audit-check.mjs), sans exception globale. Il échoue sur tout avis
+# élevé ou critique, sur tout avis non documenté, et sur les deux avis modérés documentés (glob,
+# minimatch : outillage CLI d'Expo et de Jest, non embarqué) après leur date de réévaluation.
 
 name: mobile-ci
 
@@ -81,8 +80,8 @@ jobs:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.invalid/api/v1 # valeur factice : vérifie seulement la compilation
         run: npx expo export --platform android --output-dir "${RUNNER_TEMP}/expo-export"
 
-      - name: Audit des dépendances (seuil high, voir l'en-tête)
-        run: npm audit --audit-level=high
+      - name: Audit des dépendances (exceptions ciblées et datées, voir l'en-tête)
+        run: npm run audit:check
 
   result:
     name: mobile-ci
