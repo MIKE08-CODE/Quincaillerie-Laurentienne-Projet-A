@@ -41,3 +41,9 @@ class AccountLocked(AppError):
 
 class Conflict(AppError):
     status_code = 409
+
+
+class NotFound(AppError):
+    """Ressource inexistante, ou invisible pour cet utilisateur (produit désactivé, par exemple)."""
+
+    status_code = 404

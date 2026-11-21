@@ -1,0 +1,67 @@
+﻿<Window x:Class="QuincaillerieLaurentienne.Desktop.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Quincaillerie Laurentienne — Bureau (L1)"
+        Width="1000" Height="640" MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+    <DockPanel Margin="16">
+        <!-- En-tête : titre et recherche -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <TextBlock Text="Catalogue des produits" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8" />
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Actualiser" Command="{Binding LoadCommand}"
+                        Padding="14,6" Margin="8,0,0,0" IsDefault="True"
+                        AutomationProperties.Name="Actualiser la liste" />
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="6"
+                         MaxLength="100" AutomationProperties.Name="Rechercher un produit (français ou anglais)"
+                         ToolTip="Recherche FR/EN, sans accents. Vide : tous les produits." />
+            </DockPanel>
+        </StackPanel>
+
+        <!-- Barre d'état : adresse de l'API, nombre de produits, pagination -->
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="◀ Précédent" Command="{Binding PreviousPageCommand}" Padding="10,4" Margin="0,0,8,0" />
+                <TextBlock Text="{Binding PageText}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Button Content="Suivant ▶" Command="{Binding NextPageCommand}" Padding="10,4" />
+            </StackPanel>
+            <TextBlock VerticalAlignment="Center">
+                <Run Text="{Binding StatusText, Mode=OneWay}" />
+                <Run Text="  ·  API : " Foreground="Gray" />
+                <Run Text="{Binding ApiBaseUrl, Mode=OneWay}" Foreground="Gray" />
+            </TextBlock>
+        </DockPanel>
+
+        <!-- Message d'erreur (API inaccessible, etc.) -->
+        <Border DockPanel.Dock="Top" Background="#FFFDECEC" BorderBrush="#FFA12A2A" BorderThickness="1"
+                Padding="10" Margin="0,0,0,12" CornerRadius="4"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#FFA12A2A" TextWrapping="Wrap"
+                       AutomationProperties.LiveSetting="Assertive" />
+        </Border>
+
+        <Grid>
+            <DataGrid ItemsSource="{Binding Products}" AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      IsEnabled="{Binding IsNotLoading}" AutomationProperties.Name="Liste des produits">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="150" />
+                    <DataGridTextColumn Header="Produit" Binding="{Binding NameFr}" Width="*" />
+                    <DataGridTextColumn Header="Marque" Binding="{Binding Brand}" Width="160" />
+                    <DataGridTextColumn Header="Prix" Binding="{Binding PriceDisplay}" Width="110">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="HorizontalAlignment" Value="Right" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="Chargement…" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+    </DockPanel>
+</Window>

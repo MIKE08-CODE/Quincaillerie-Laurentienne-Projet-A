@@ -1,0 +1,4042 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API Quincaillerie Laurentienne",
+    "description": "\nAPI REST de la Quincaillerie Laurentienne, consommée par l'application web, l'application mobile\net l'application de bureau. **Toutes les décisions de sécurité sont prises ici, par le serveur.**\n\n## Tester une route protégée dans cette page\n1. `POST /api/v1/auth/login` → copier la valeur de `access_token`.\n2. Cliquer sur **Authorize** 🔒 (en haut à droite) et coller le jeton (sans le mot « Bearer »).\n3. Le jeton d'accès expire après **15 minutes** : appeler `POST /api/v1/auth/refresh` pour en obtenir un\n   nouveau (le navigateur envoie automatiquement le cookie `ql_refresh`).\n\n## Les deux jetons\n| Jeton | Durée | Où il voyage |\n|---|---|---|\n| Accès (JWT) | 15 min | En-tête `Authorization: Bearer …`, gardé **en mémoire** par le client |\n| Rafraîchissement | 7 jours (30 jours max. par session) | Cookie `ql_refresh` httpOnly, Secure, SameSite |\n\n## Format des erreurs\nToutes les erreurs ont la même forme. Le `code` est stable : les applications le traduisent en FR/EN.\n```json\n{\"detail\": {\"code\": \"invalid_credentials\", \"message\": \"Courriel ou mot de passe invalide.\"}}\n```\n\n## Rôles\n`visiteur` (sans jeton) · `client` · `clerk` (commis) · `manager` (gérant) · `admin`.\nLe personnel (commis, gérant, administrateur) doit avoir complété la **MFA** pour accéder\naux routes protégées.\n",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "santé"
+        ],
+        "summary": "Vérifier que l'API répond",
+        "description": "Point de santé (ENF-13), utilisé par l'hébergeur pour savoir si l'API répond.\nNe nécessite aucune authentification.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Créer un compte client",
+        "description": "Crée un compte **client** et envoie un courriel avec un lien de confirmation (valide 24 h).\n\n- Le consentement à la politique de confidentialité est **obligatoire** (`accept_privacy_policy: true`);\n  sa date et sa version sont enregistrées (Loi 25).\n- Le mot de passe doit faire au moins 12 caractères et ne pas être un mot de passe courant.\n- Le rôle ne peut pas être choisi : les comptes du personnel sont créés par un administrateur.\n- **La réponse est la même si le courriel est déjà utilisé** (pour ne pas révéler quels comptes\n  existent); le propriétaire du compte est alors prévenu par courriel.\n- Tant que le courriel n'est pas confirmé, le client peut se connecter mais **pas commander**.\n\nLimite : 5 requêtes par minute par adresse IP.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Confirmer le courriel",
+        "description": "Confirme le courriel avec le jeton du lien reçu (`…/verifier-courriel#token=XYZ`).\n\nLe jeton est **à usage unique** : un deuxième appel avec le même jeton renvoie 400.\nEn développement, le lien s'affiche dans le terminal du serveur.",
+        "operationId": "verify_email_api_v1_auth_verify_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Lien invalide, déjà utilisé ou expiré (`invalid_or_expired_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email/resend": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Renvoyer le courriel de confirmation",
+        "description": "Envoie un nouveau lien de confirmation; l'ancien lien cesse de fonctionner.\n\n**Même réponse que le compte existe ou non.** Limite : 5 requêtes par minute par adresse IP.",
+        "operationId": "resend_verification_api_v1_auth_verify_email_resend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Se connecter",
+        "description": "Vérifie le courriel et le mot de passe. Trois réponses possibles :\n\n- **Client** : `access_token` (15 min) + cookie httpOnly `ql_refresh` (7 jours).\n- **Personnel sans MFA configurée** : `access_token` avec `mfa_setup_required: true` et **sans\n  cookie**. Ce jeton ne sert qu'à `/mfa/setup` puis `/mfa/enable`.\n- **Compte avec MFA** : `mfa_required: true` + `mfa_token`, à envoyer à `/mfa/verify` avec le code.\n\n**Verrouillage progressif** : après 5 échecs, le compte est bloqué 15 minutes (423), puis 30, puis 60…\nPendant le blocage, même le bon mot de passe est refusé.\nLimite : 10 requêtes par minute par adresse IP.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie (`TokenResponse` + cookie `ql_refresh`) **ou** code MFA requis (`MfaChallengeResponse`, sans cookie).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TokenResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MfaChallengeResponse"
+                    }
+                  ],
+                  "title": "Response Login Api V1 Auth Login Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Courriel ou mot de passe invalide (`invalid_credentials`) — même message dans les deux cas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Compte bloqué après 5 échecs (`account_locked`). Voir l'en-tête `Retry-After` (secondes).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Obtenir un nouveau jeton d'accès",
+        "description": "Échange le cookie `ql_refresh` contre un nouveau jeton d'accès. **Aucun corps à envoyer** :\nle navigateur joint le cookie automatiquement (côté web : `fetch(..., {credentials: \"include\"})`).\n\n- **Rotation** : chaque appel remplace le cookie par un nouveau; l'ancien devient inutilisable.\n- Si un ancien cookie est présenté de nouveau (signe de vol), **toutes les sessions** de\n  l'utilisateur sont fermées.\n- Une session dure au plus 30 jours, même si elle est rafraîchie régulièrement.",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Cookie absent, expiré ou révoqué (`invalid_refresh_token`) : il faut se reconnecter.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Se déconnecter",
+        "description": "Révoque le jeton de rafraîchissement (cookie `ql_refresh`) et efface le cookie.\n\nRéussit toujours (204), même sans cookie. Le client doit aussi oublier son jeton d'accès,\nqui reste techniquement valide jusqu'à son expiration (15 min au plus).",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Profil de l'utilisateur connecté",
+        "description": "Renvoie le profil et le rôle de l'utilisateur. Nécessite un jeton d'accès (**Authorize** 🔒).",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide (`not_authenticated`, `invalid_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Personnel sans MFA complétée (`mfa_required`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Demander un lien de réinitialisation",
+        "description": "Envoie un lien de réinitialisation **valide 30 minutes et utilisable une seule fois**.\nUne nouvelle demande annule le lien précédent.\n\n**La réponse est identique que le courriel existe ou non** : on ne peut pas s'en servir pour\nsavoir qui a un compte. Limite : 5 requêtes par minute par adresse IP.",
+        "operationId": "forgot_password_api_v1_auth_password_forgot_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Choisir un nouveau mot de passe",
+        "description": "Change le mot de passe avec le jeton du lien reçu (`…/reinitialiser-mot-de-passe#token=XYZ`).\n\n- Si le nouveau mot de passe est trop faible (422), le lien reste utilisable pour réessayer.\n- En cas de succès, **toutes les sessions sont fermées** (appareils et jetons d'accès déjà émis) :\n  il faut se reconnecter. Le blocage éventuel du compte est levé.",
+        "operationId": "reset_password_api_v1_auth_password_reset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Lien invalide, déjà utilisé ou expiré (`invalid_or_expired_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/setup": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "MFA, étape 1 : générer le code QR",
+        "description": "Génère un secret TOTP et l'adresse `otpauth://` à afficher en **code QR**.\n\nAccepte le jeton limité reçu à la connexion (`mfa_setup_required: true`). La MFA n'est pas\nencore active : il faut confirmer avec un premier code sur `/mfa/enable`.",
+        "operationId": "mfa_setup_api_v1_auth_mfa_setup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaSetupResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide (`not_authenticated`, `invalid_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La MFA est déjà activée (`mfa_already_enabled`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/mfa/enable": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "MFA, étape 2 : activer avec un premier code",
+        "description": "Vérifie le premier code de l'application d'authentification et active la MFA.\nRenvoie une **session complète** (jeton d'accès + cookie) : le personnel a maintenant accès à ses routes.\n\nLes codes erronés comptent dans le verrouillage du compte (5 échecs → blocage).",
+        "operationId": "mfa_enable_api_v1_auth_mfa_enable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Code invalide (`invalid_mfa_code`) ou jeton absent/expiré.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`/mfa/setup` n'a pas encore été appelé (`mfa_setup_required`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La MFA est déjà activée (`mfa_already_enabled`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Compte bloqué après 5 codes erronés (`account_locked`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/mfa/verify": {
+      "post": {
+        "tags": [
+          "authentification"
+        ],
+        "summary": "Se connecter, étape 2 : saisir le code MFA",
+        "description": "Deuxième étape de la connexion d'un compte avec MFA : envoie le `mfa_token` reçu de `/login`\n(valide 5 minutes) et le code à 6 chiffres. Renvoie une session complète.\n\nUn même code ne peut servir qu'**une seule fois**. Les codes erronés comptent dans le verrouillage.",
+        "operationId": "mfa_verify_api_v1_auth_mfa_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Code invalide (`invalid_mfa_code`) ou `mfa_token` expiré (`invalid_mfa_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Compte bloqué après 5 codes erronés (`account_locked`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides ou mot de passe trop faible (`password_too_short`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes depuis cette adresse IP (`rate_limited`). Voir `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Arborescence des catégories",
+        "description": "Toutes les catégories, en arbre (`children`), noms FR et EN. Liste complète non paginée.",
+        "operationId": "list_categories_api_v1_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryNode"
+                  },
+                  "type": "array",
+                  "title": "Response List Categories Api V1 Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stores": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Magasins",
+        "description": "Les magasins (adresse, téléphone, heures d'ouverture). Liste complète non paginée.",
+        "operationId": "list_stores_api_v1_stores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Stores Api V1 Stores Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Liste paginée des produits",
+        "description": "Produits actifs. Le filtre `category_id` inclut toutes les sous-catégories (A-CAT-01).",
+        "operationId": "list_products_api_v1_products_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Numéro de page (à partir de 1).",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Numéro de page (à partir de 1)."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Éléments par page (50 au maximum).",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Éléments par page (50 au maximum)."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name_asc",
+                "name_desc"
+              ],
+              "type": "string",
+              "description": "Tri : nouveauté, prix ou nom.",
+              "default": "newest",
+              "title": "Sort"
+            },
+            "description": "Tri : nouveauté, prix ou nom."
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "fr",
+                "en"
+              ],
+              "type": "string",
+              "description": "Langue utilisée pour le tri par nom.",
+              "default": "fr",
+              "title": "Lang"
+            },
+            "description": "Langue utilisée pour le tri par nom."
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Catégorie (ses sous-catégories sont incluses).",
+              "title": "Category Id"
+            },
+            "description": "Catégorie (ses sous-catégories sont incluses)."
+          },
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Marque.",
+              "title": "Brand Id"
+            },
+            "description": "Marque."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ProductSummary_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produit ou catégorie introuvable (`product_not_found`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Paramètre invalide (p. ex. `size` > 50, `page` < 1).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products/{product_id}": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Fiche produit",
+        "description": "Nom et description FR/EN, SKU, prix, images, caractéristiques et disponibilité par magasin.",
+        "operationId": "get_product_api_v1_products__product_id__get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produit ou catégorie introuvable (`product_not_found`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Paramètre invalide (p. ex. `size` > 50, `page` < 1).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products/{product_id}/availability": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Disponibilité par magasin",
+        "description": "Statut calculé à partir du stock réel : `in_stock`, `low_stock` ou `out_of_stock` (A-CAT-02).",
+        "operationId": "get_availability_api_v1_products__product_id__availability_get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreAvailability"
+                  },
+                  "title": "Response Get Availability Api V1 Products  Product Id  Availability Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produit ou catégorie introuvable (`product_not_found`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Paramètre invalide (p. ex. `size` > 50, `page` < 1).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "tags": [
+          "catalogue"
+        ],
+        "summary": "Recherche plein texte FR/EN",
+        "description": "Recherche dans les noms et descriptions FR et EN, insensible aux accents (A-CAT-03).\n\n« perceuse » et « drill » trouvent les perceuses; « equerre » trouve « équerre ».",
+        "operationId": "search_api_v1_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "Texte recherché, en français ou en anglais.",
+              "title": "Q"
+            },
+            "description": "Texte recherché, en français ou en anglais."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Numéro de page (à partir de 1).",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Numéro de page (à partir de 1)."
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Éléments par page (50 au maximum).",
+              "default": 20,
+              "title": "Size"
+            },
+            "description": "Éléments par page (50 au maximum)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ProductSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Paramètre invalide (p. ex. `size` > 50, `page` < 1).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/products": {
+      "get": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Produits (actifs et désactivés)",
+        "operationId": "list_products_api_v1_admin_products_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Size"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrer par statut.",
+              "title": "Is Active"
+            },
+            "description": "Filtrer par statut."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ProductAdminOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Créer un produit",
+        "operationId": "create_product_api_v1_admin_products_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/products/{product_id}": {
+      "get": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Consulter un produit",
+        "operationId": "get_product_api_v1_admin_products__product_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Modifier un produit (partiel)",
+        "description": "Seuls les champs envoyés sont modifiés; `null` efface un champ facultatif.",
+        "operationId": "update_product_api_v1_admin_products__product_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Désactiver un produit",
+        "description": "Désactivation logique (`is_active = false`) : le produit disparaît du catalogue public.",
+        "operationId": "deactivate_product_api_v1_admin_products__product_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/products/{product_id}/images": {
+      "post": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Ajouter une image (URL https)",
+        "description": "Au L1, une image est désignée par une URL https; aucun fichier n'est téléversé.",
+        "operationId": "add_image_api_v1_admin_products__product_id__images_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/products/{product_id}/images/{image_id}": {
+      "delete": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Retirer une image",
+        "operationId": "delete_image_api_v1_admin_products__product_id__images__image_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "image_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Image Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/categories": {
+      "get": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Catégories (liste à plat)",
+        "operationId": "list_categories_api_v1_admin_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryAdminOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Categories Api V1 Admin Categories Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Créer une catégorie",
+        "operationId": "create_category_api_v1_admin_categories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/categories/{category_id}": {
+      "patch": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Modifier une catégorie (partiel)",
+        "description": "Un déplacement qui créerait un cycle est refusé (422 `category_cycle`).",
+        "operationId": "update_category_api_v1_admin_categories__category_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Supprimer une catégorie vide",
+        "description": "Refusé (409) si la catégorie contient des sous-catégories ou des produits.",
+        "operationId": "delete_category_api_v1_admin_categories__category_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/brands": {
+      "get": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Marques (actives et désactivées)",
+        "operationId": "list_brands_api_v1_admin_brands_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BrandOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Brands Api V1 Admin Brands Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Créer une marque",
+        "operationId": "create_brand_api_v1_admin_brands_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/brands/{brand_id}": {
+      "patch": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Modifier une marque (partiel)",
+        "operationId": "update_brand_api_v1_admin_brands__brand_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Doublon ou ressource utilisée (`sku_taken`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Désactiver une marque",
+        "description": "Désactivation logique : la marque ne peut plus être attribuée à un produit.",
+        "operationId": "deactivate_brand_api_v1_admin_brands__brand_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BrandCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "Laurentide Pro"
+            ]
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Slug",
+            "examples": [
+              "laurentide-pro"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "slug"
+        ],
+        "title": "BrandCreate"
+      },
+      "BrandOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "is_active"
+        ],
+        "title": "BrandOut"
+      },
+      "BrandUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "BrandUpdate"
+      },
+      "CategoryAdminOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name_fr": {
+            "type": "string",
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "slug",
+          "name_fr",
+          "name_en",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CategoryAdminOut"
+      },
+      "CategoryCreate": {
+        "properties": {
+          "name_fr": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Slug",
+            "examples": [
+              "perceuses"
+            ]
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name_fr",
+          "name_en",
+          "slug"
+        ],
+        "title": "CategoryCreate"
+      },
+      "CategoryNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name_fr": {
+            "type": "string",
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryNode"
+            },
+            "type": "array",
+            "title": "Children",
+            "description": "Sous-catégories, triées par nom français."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name_fr",
+          "name_en",
+          "children"
+        ],
+        "title": "CategoryNode"
+      },
+      "CategoryUpdate": {
+        "properties": {
+          "name_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id",
+            "description": "`null` place la catégorie à la racine."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CategoryUpdate"
+      },
+      "EmailRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Adresse courriel (insensible à la casse).",
+            "examples": [
+              "marie.gagnon@example.com"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "EmailRequest"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Code stable, à traduire côté client (FR/EN).",
+            "examples": [
+              "invalid_credentials"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message par défaut, en français."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "description": "Format de TOUTES les erreurs de l'API. Les erreurs 422 ajoutent une liste `errors`\n(champ fautif + raison), sans jamais recopier la valeur envoyée."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ImageCreate": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "URL https de l'image.",
+            "examples": [
+              "https://images.example.com/perc-18v-001.jpg"
+            ]
+          },
+          "alt_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 250
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt Fr"
+          },
+          "alt_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 250
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt En"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position",
+            "description": "Ordre; à la fin par défaut."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "ImageCreate"
+      },
+      "ImageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "alt_fr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt Fr"
+          },
+          "alt_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt En"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "alt_fr",
+          "alt_en",
+          "position"
+        ],
+        "title": "ImageOut"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Adresse courriel (insensible à la casse).",
+            "examples": [
+              "marie.gagnon@example.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "format": "password",
+            "title": "Password",
+            "description": "Mot de passe du compte.",
+            "writeOnly": true,
+            "examples": [
+              "Rivière-Pelle-Écrou-42"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "MessageResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message à afficher à l'utilisateur."
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "MessageResponse"
+      },
+      "MfaChallengeResponse": {
+        "properties": {
+          "mfa_required": {
+            "type": "boolean",
+            "const": true,
+            "title": "Mfa Required",
+            "default": true
+          },
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "À renvoyer à `/auth/mfa/verify` avec le code, dans les 5 minutes."
+          }
+        },
+        "type": "object",
+        "required": [
+          "mfa_token"
+        ],
+        "title": "MfaChallengeResponse",
+        "description": "Mot de passe correct, mais la MFA est activée : il faut encore un code TOTP."
+      },
+      "MfaCodeRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "description": "Code à 6 chiffres affiché par l'application d'authentification.",
+            "examples": [
+              "123456"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "MfaCodeRequest"
+      },
+      "MfaSetupResponse": {
+        "properties": {
+          "secret": {
+            "type": "string",
+            "title": "Secret",
+            "description": "Secret TOTP à saisir manuellement si le code QR ne peut être lu."
+          },
+          "otpauth_uri": {
+            "type": "string",
+            "title": "Otpauth Uri",
+            "description": "Adresse `otpauth://` à afficher sous forme de code QR (Google Authenticator, Microsoft Authenticator…)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "secret",
+          "otpauth_uri"
+        ],
+        "title": "MfaSetupResponse"
+      },
+      "MfaVerifyRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "description": "Code à 6 chiffres affiché par l'application d'authentification.",
+            "examples": [
+              "123456"
+            ]
+          },
+          "mfa_token": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Mfa Token",
+            "description": "Jeton `mfa_token` reçu de `/auth/login` (valide 5 minutes)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "mfa_token"
+        ],
+        "title": "MfaVerifyRequest"
+      },
+      "Page_ProductAdminOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductAdminOut"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Éléments de la page."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Numéro de la page courante (à partir de 1)."
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Size",
+            "description": "Nombre d'éléments demandés par page."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Nombre total d'éléments correspondant à la requête."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ],
+        "title": "Page[ProductAdminOut]"
+      },
+      "Page_ProductSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductSummary"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Éléments de la page."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Numéro de la page courante (à partir de 1)."
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Size",
+            "description": "Nombre d'éléments demandés par page."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Nombre total d'éléments correspondant à la requête."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ],
+        "title": "Page[ProductSummary]"
+      },
+      "ProductAdminOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "name_fr": {
+            "type": "string",
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand",
+            "description": "Nom de la marque."
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents",
+            "description": "Prix en cents (entier)."
+          },
+          "main_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Image Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "description_fr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fr"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "specs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Specs",
+            "description": "Caractéristiques techniques (objet JSON)."
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/ImageOut"
+            },
+            "type": "array",
+            "title": "Images"
+          },
+          "availability": {
+            "items": {
+              "$ref": "#/components/schemas/StoreAvailability"
+            },
+            "type": "array",
+            "title": "Availability"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sku",
+          "name_fr",
+          "name_en",
+          "brand",
+          "price_cents",
+          "main_image_url",
+          "category_id",
+          "description_fr",
+          "description_en",
+          "specs",
+          "images",
+          "availability",
+          "brand_id",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProductAdminOut"
+      },
+      "ProductCreate": {
+        "properties": {
+          "sku": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,63}$",
+            "title": "Sku",
+            "description": "Code unique (lettres majuscules, chiffres, `.`, `_`, `-`; converti en majuscules).",
+            "examples": [
+              "PERC-18V-001"
+            ]
+          },
+          "name_fr": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "description_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fr"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "price_cents": {
+            "type": "integer",
+            "maximum": 100000000.0,
+            "minimum": 0.0,
+            "title": "Price Cents",
+            "examples": [
+              8999
+            ]
+          },
+          "specs": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Specs",
+            "examples": [
+              {
+                "batteries": 2,
+                "tension_v": 18
+              }
+            ]
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sku",
+          "name_fr",
+          "name_en",
+          "price_cents"
+        ],
+        "title": "ProductCreate"
+      },
+      "ProductDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "name_fr": {
+            "type": "string",
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand",
+            "description": "Nom de la marque."
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents",
+            "description": "Prix en cents (entier)."
+          },
+          "main_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Image Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "description_fr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fr"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "specs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Specs",
+            "description": "Caractéristiques techniques (objet JSON)."
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/ImageOut"
+            },
+            "type": "array",
+            "title": "Images"
+          },
+          "availability": {
+            "items": {
+              "$ref": "#/components/schemas/StoreAvailability"
+            },
+            "type": "array",
+            "title": "Availability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sku",
+          "name_fr",
+          "name_en",
+          "brand",
+          "price_cents",
+          "main_image_url",
+          "category_id",
+          "description_fr",
+          "description_en",
+          "specs",
+          "images",
+          "availability"
+        ],
+        "title": "ProductDetail"
+      },
+      "ProductSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "name_fr": {
+            "type": "string",
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand",
+            "description": "Nom de la marque."
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents",
+            "description": "Prix en cents (entier)."
+          },
+          "main_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Image Url"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sku",
+          "name_fr",
+          "name_en",
+          "brand",
+          "price_cents",
+          "main_image_url",
+          "category_id"
+        ],
+        "title": "ProductSummary"
+      },
+      "ProductUpdate": {
+        "properties": {
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z0-9][A-Z0-9._-]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "name_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Fr"
+          },
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "description_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Fr"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "price_cents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Cents"
+          },
+          "specs": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specs"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProductUpdate",
+        "description": "Modification partielle (PATCH). Tous les champs sont facultatifs."
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Adresse courriel (insensible à la casse).",
+            "examples": [
+              "marie.gagnon@example.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "format": "password",
+            "title": "Password",
+            "description": "Au moins 12 caractères, absent de la liste des mots de passe courants, sans le courriel ni le nom.",
+            "writeOnly": true,
+            "examples": [
+              "Rivière-Pelle-Écrou-42"
+            ]
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "Prénom.",
+            "examples": [
+              "Marie"
+            ]
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "Nom de famille.",
+            "examples": [
+              "Gagnon"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "title": "Language",
+            "description": "Langue préférée pour les courriels et l'interface.",
+            "default": "fr"
+          },
+          "accept_privacy_policy": {
+            "type": "boolean",
+            "const": true,
+            "title": "Accept Privacy Policy",
+            "description": "Consentement explicite à la politique de confidentialité (Loi 25). Doit valoir `true`, sinon l'inscription est refusée."
+          },
+          "marketing_opt_in": {
+            "type": "boolean",
+            "title": "Marketing Opt In",
+            "description": "Accepte de recevoir des courriels promotionnels (facultatif).",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "first_name",
+          "last_name",
+          "accept_privacy_policy"
+        ],
+        "title": "RegisterRequest"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Token",
+            "description": "Jeton reçu par courriel (partie du lien située après `#token=`)."
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 1024,
+            "format": "password",
+            "title": "New Password",
+            "description": "Nouveau mot de passe (mêmes règles qu'à l'inscription).",
+            "writeOnly": true,
+            "examples": [
+              "Rivière-Pelle-Écrou-42"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "ResetPasswordRequest"
+      },
+      "StoreAvailability": {
+        "properties": {
+          "store_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Id"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_stock",
+              "low_stock",
+              "out_of_stock"
+            ],
+            "title": "Status",
+            "description": "`in_stock` (En stock), `low_stock` (Stock faible) ou `out_of_stock` (Rupture). Calculé à partir du stock réel; les quantités ne sont jamais exposées."
+          }
+        },
+        "type": "object",
+        "required": [
+          "store_id",
+          "store_name",
+          "status"
+        ],
+        "title": "StoreAvailability"
+      },
+      "StoreOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "opening_hours": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Opening Hours",
+            "description": "Heures d'ouverture par jour (`mon` à `sun`), p. ex. `[\"08:00\", \"21:00\"]`."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address",
+          "phone",
+          "opening_hours"
+        ],
+        "title": "StoreOut"
+      },
+      "TokenRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Token",
+            "description": "Jeton reçu par courriel (partie du lien située après `#token=`)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "TokenRequest"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Jeton d'accès (JWT) à envoyer dans l'en-tête `Authorization: Bearer <jeton>`."
+          },
+          "token_type": {
+            "type": "string",
+            "const": "bearer",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Durée de vie du jeton d'accès, en secondes (900 = 15 min)."
+          },
+          "mfa_setup_required": {
+            "type": "boolean",
+            "title": "Mfa Setup Required",
+            "description": "`true` pour le personnel qui n'a pas encore configuré la MFA : ce jeton ne permet que d'appeler `/auth/mfa/setup` puis `/auth/mfa/enable`.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "TokenResponse",
+        "description": "Session ouverte. Le jeton de rafraîchissement n'est PAS ici : il voyage seulement dans le\ncookie httpOnly `ql_refresh`, illisible par JavaScript."
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Identifiant unique de l'utilisateur."
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Courriel (toujours en minuscules)."
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name",
+            "description": "Prénom."
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name",
+            "description": "Nom de famille."
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "Langue préférée : `fr` ou `en`."
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "`client`, `clerk` (commis), `manager` (gérant) ou `admin`."
+          },
+          "is_email_verified": {
+            "type": "boolean",
+            "title": "Is Email Verified",
+            "description": "Un compte non vérifié ne peut pas passer de commande."
+          },
+          "mfa_enabled": {
+            "type": "boolean",
+            "title": "Mfa Enabled",
+            "description": "`true` si l'authentification multifacteur est activée."
+          },
+          "store_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Store Ids",
+            "description": "Magasins auxquels le commis ou le gérant est affecté."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "first_name",
+          "last_name",
+          "language",
+          "role",
+          "is_email_verified",
+          "mfa_enabled",
+          "store_ids"
+        ],
+        "title": "UserResponse",
+        "description": "Profil de l'utilisateur connecté. Aucun champ sensible (empreinte, secret MFA, compteurs)."
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "client",
+          "clerk",
+          "manager",
+          "admin"
+        ],
+        "title": "UserRole",
+        "description": "Rôles stockés (A-AUTH-05). Le « visiteur » n'est pas stocké : c'est l'absence de jeton."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "description": "Jeton d'accès reçu de `/api/v1/auth/login` (coller la valeur seule, sans « Bearer »).",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "authentification",
+      "description": "Comptes, connexion, jetons, réinitialisation du mot de passe et MFA (cahier des charges, module A.4.1 : A-AUTH-01 à A-AUTH-07)."
+    },
+    {
+      "name": "catalogue",
+      "description": "Catalogue public : catégories, magasins, produits, disponibilité et recherche FR/EN (A-CAT-01 à A-CAT-03). Aucune authentification."
+    },
+    {
+      "name": "administration du catalogue",
+      "description": "Produits, images, catégories et marques (A-ADM-01). Rôle administrateur et MFA requis."
+    },
+    {
+      "name": "santé",
+      "description": "Surveillance de l'API par l'hébergeur."
+    }
+  ]
+}

@@ -174,3 +174,69 @@ def last_email_token() -> str:
     """Extrait le jeton du dernier courriel envoyé (lien « ...#token=XYZ »)."""
     body = email_service.outbox[-1].body
     return body.split("#token=")[1].split()[0]
+
+
+# ---------------------------------------------------------------------------
+# Catalogue (A-CAT, A-ADM-01)
+# ---------------------------------------------------------------------------
+def error_code(response) -> str:
+    """Code stable d'une réponse d'erreur, quel que soit son statut (format actuel : `detail.code`)."""
+    return response.json()["detail"]["code"]
+
+
+@pytest.fixture
+def make_category(db: Session):
+    from app.models import Category
+
+    def _make(slug: str, *, parent: "Category | None" = None, name_fr: str | None = None) -> Category:
+        category = Category(
+            slug=slug,
+            parent_id=parent.id if parent else None,
+            name_fr=name_fr or f"Catégorie {slug}",
+            name_en=f"Category {slug}",
+        )
+        db.add(category)
+        db.commit()
+        return category
+
+    return _make
+
+
+@pytest.fixture
+def make_brand(db: Session):
+    from app.models import Brand
+
+    def _make(name: str = "Laurentide Pro", slug: str | None = None, *, is_active: bool = True) -> Brand:
+        brand = Brand(name=name, slug=slug or name.lower().replace(" ", "-"), is_active=is_active)
+        db.add(brand)
+        db.commit()
+        return brand
+
+    return _make
+
+
+@pytest.fixture
+def make_product(db: Session):
+    from app.models import Product
+
+    def _make(sku: str, **fields) -> Product:
+        values = {"name_fr": f"Produit {sku}", "name_en": f"Product {sku}", "price_cents": 1000} | fields
+        product = Product(sku=sku, **values)
+        db.add(product)
+        db.commit()
+        return product
+
+    return _make
+
+
+@pytest.fixture
+def seeded(db: Session):
+    """Base amorcée avec les données du L1 (3 magasins, 157 produits, stocks)."""
+    from app.seed import seed_l1
+
+    return seed_l1.run(db)
+
+
+@pytest.fixture
+def admin_headers(make_user) -> dict[str, str]:
+    return auth_header(make_user(UserRole.ADMIN), mfa=True)

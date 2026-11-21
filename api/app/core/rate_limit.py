@@ -21,3 +21,4 @@ REGISTER_LIMIT = "5/minute"
 PASSWORD_FORGOT_LIMIT = "5/minute"  # noqa: S105 — une limite, pas un mot de passe  # nosec B105
 TOKEN_SUBMIT_LIMIT = "10/minute"  # noqa: S105 — courriel, réinitialisation, codes MFA  # nosec B105
 REFRESH_LIMIT = "30/minute"
+PUBLIC_READ_LIMIT = "120/minute"  # lecture publique du catalogue (contrat §5)

@@ -54,3 +54,6 @@ TestResults/
 rag/sources/raw/
 rag/**/*.index
 rag/**/vectorstore/
+
+# Cahier des charges : document de cours, à ne jamais versionner ni publier (issue #27).
+/docs/requirements/Cahier_des_charges_*.pdf
