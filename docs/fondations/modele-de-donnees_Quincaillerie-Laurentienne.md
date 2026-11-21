@@ -1,5 +1,5 @@
 # Modèle de données — Quincaillerie Laurentienne (Projet A)
-**Livrable L1 — Fondations | Version documentaire 1.1 | 21 novembre 2026**  
+**Livrable L1 — Fondations | Version documentaire 1.2 | 21 novembre 2026**  
 **Équipe :** à compléter · **Responsable :** à compléter · **Dépôt GitHub :** à compléter  
 **Statut :** modèle cible proposé ; vérification du code, des migrations et de la base déployée en attente.
 
@@ -296,5 +296,53 @@ Le script `seed_l1` cible **3 magasins, au moins 150 produits et leurs inventair
 
 **Liens à renseigner :** dépôt GitHub [à compléter] · migrations [à compléter] · diagramme [présent dans ce document] · preuve de déploiement [à compléter].
 
+
+## 8. Schéma implémenté et vérifié (L1)
+
+Cette section décrit le schéma **réellement créé** par les migrations Alembic (vérifié le 21 novembre
+2026 dans une base PostgreSQL 16 + pgvector isolée). Les tables du catalogue, des stocks et des entités
+transactionnelles sont dans la **PR #29, non fusionnée** ; elles ne sont **pas encore appliquées en
+production** (aucun déploiement). Preuve « migrations appliquées en production » : à compléter.
+
+### 8.1 Révisions Alembic
+
+| Révision | Parent | Contenu | État |
+|---|---|---|---|
+| `7217efbff6be` | — | `users`, `consents`, `stores`, `staff_assignments`, `one_time_tokens`, `refresh_tokens` | Fusionné sur `main` |
+| `aa6b82a168aa` | `7217efbff6be` | Expiration absolue des sessions, invalidation des jetons | Fusionné sur `main` |
+| `c4a1e7d2b9f0` | `aa6b82a168aa` | `unaccent`, configurations `fr_unaccent`/`en_unaccent`, `categories` (+ déclencheur anti-cycle), `brands`, `products` (+ `search_vector`, GIN), `product_images` | PR #29 |
+| `d8b3f5a6c1e2` | `c4a1e7d2b9f0` | `inventory`, `stock_movements` (+ déclencheur « ajout seulement ») | PR #29 |
+| `e2c9a4b7d3f1` (head) | `d8b3f5a6c1e2` | `carts`, `cart_items`, `orders`, `order_items`, `order_status_history`, `payment_events`, FK `stock_movements.order_id` | PR #29 |
+
+Vérifications automatisées (PR #29) : `alembic check` sans écart entre modèles et migrations ;
+aller-retour `downgrade` / `upgrade` ; suite complète appliquant toutes les migrations sur une base vide.
+
+### 8.2 Entités Must créées et écarts avec le modèle cible
+
+| Entité | État | Écart ou précision par rapport au §4 |
+|---|---|---|
+| `users` | Créée | Unicité du courriel par **index unique sur `lower(email)`** (et non `CITEXT`) ; colonnes MFA et verrouillage ajoutées |
+| `consents`, `stores`, `staff_assignments` | Créées | `stores.phone` obligatoire (30 caractères) |
+| `one_time_tokens`, `refresh_tokens` | Créées | Entités techniques hors A.6 (A-AUTH-01, 02, 04) |
+| `categories` | Créée (PR #29) | Déclencheur `categories_prevent_cycle` (refus des cycles) ; CHECK du format du `slug` |
+| **`brands`** | Créée (PR #29) | **Entité ajoutée** (ADR-004) : `products.brand_id` remplace l'attribut texte `brand` de A.6 |
+| `products` | Créée (PR #29) | `category_id` et `brand_id` (RESTRICT) ; `updated_at` ; `search_vector` **généré** (ADR-006) |
+| `product_images` | Créée (PR #29) | URL `https://` obligatoire ; position unique par produit |
+| `inventory` | Créée (PR #29) | CHECK de A.6 + `reorder_threshold >= 0`, `version >= 1` |
+| `stock_movements` | Créée (PR #29) | Quantité **signée** contrôlée par type ; motif obligatoire pour `adjustment` ; FK composée vers `inventory` ; ajout seulement (ADR-005) |
+| `carts`, `cart_items` | Créées (PR #29) | Un panier par client (UNIQUE `user_id`) avec `store_id` ; quantité 1 à 20 |
+| `orders`, `order_items`, `order_status_history` | Créées (PR #29) | Statuts d'A-ORD-07 (CHECK) ; `total = sous-total − remise + TPS + TVQ` (CHECK) |
+| `payment_events` | Créée (PR #29) | `stripe_event_id` en clé primaire |
+| `promotions`, `promo_codes`, `audit_logs`, tables du RAG, `reviews` | **Non créées** | Hors entités Must (orientation O8) ; à créer à leur jalon |
+
+DEC-DATA-02 (mouvements) et DEC-DATA-05 (recherche) sont tranchées par les ADR-005 et ADR-006.
+
+### 8.3 Données d'amorçage L1 (`python -m app.seed.seed_l1`, PR #29)
+
+Mesuré dans la base isolée après **deux** exécutions : 3 magasins, 30 catégories, 8 marques fictives,
+157 produits bilingues, 157 images, 471 lignes de stock (56 ruptures, 71 stocks faibles, 344 en stock),
+415 mouvements `receipt`, 0 doublon, 0 écart entre le stock et le grand livre. VER-04 : vérifié
+localement ; preuve en production à compléter.
+
 ---
-**Historique :** v1.0 (19 novembre 2026), modèle initial ; v1.1 (21 novembre 2026), ajout de diagrammes Mermaid, clarification des contraintes, de la traçabilité et des validations en attente, sans modification de la base conceptuelle.
+**Historique :** v1.0 (19 novembre 2026), modèle initial ; v1.1 (21 novembre 2026), ajout de diagrammes Mermaid, clarification des contraintes, de la traçabilité et des validations en attente, sans modification de la base conceptuelle ; v1.2 (21 novembre 2026), schéma implémenté et vérifié (§8), entité `brands`, écarts consignés.

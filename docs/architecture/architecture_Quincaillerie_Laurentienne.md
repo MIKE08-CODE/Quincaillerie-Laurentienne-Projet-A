@@ -3,7 +3,7 @@
 | Champ | Valeur |
 |---|---|
 | Livrable | L1 — Fondations (cible applicative `v0.1.0`) |
-| Version du document | 1.1 — révision du document initial |
+| Version du document | 1.2 — état de réalisation et ADR 004 à 008 (21 novembre 2026) |
 | Auteur | [à compléter] |
 | Approbateur | [à compléter] |
 | Statut | Proposition à valider |
@@ -133,13 +133,18 @@ Ce schéma est **logique** : les noms des services ne présument pas des noms de
 
 ## 4. Architecture Decision Records
 
-Les trois décisions initiales sont **conservées**. Leur statut demeure **Proposé** jusqu'à approbation explicite.
+Les trois décisions initiales sont **conservées**. Leur statut demeure **Proposé** jusqu'à approbation explicite. Les ADR 004 à 008, ajoutés au L1, sont dans [`docs/adr/`](../adr/).
 
 | ADR | Sujet | Décision | Statut |
 |---|---|---|---|
 | ADR-001 | Stratégie de verrouillage du stock | Verrouillage pessimiste dans une transaction courte. | Proposé |
 | ADR-002 | Stockage des jetons d'authentification | Accès en mémoire; rafraîchissement en cookie httpOnly sur le Web. | Proposé |
 | ADR-003 | Cadre de l'application mobile | React Native + Expo. | Proposé |
+| ADR-004 | Marques | Entité dédiée `brands`, sans duplication du nom ([fichier](../adr/0004-marques-entite-dediee.md)). | Accepté (D2) |
+| ADR-005 | Stocks | Grand livre signé en ajout seulement ([fichier](../adr/0005-grand-livre-des-stocks.md)). | Accepté (D3) |
+| ADR-006 | Recherche plein texte | Colonne générée + configurations `*_unaccent` ([fichier](../adr/0006-recherche-plein-texte.md)). | Accepté (O9) |
+| ADR-007 | React 19 sur le mobile | Imposé par Expo SDK 58 ; web en React 18 ([fichier](../adr/0007-react-19-mobile-expo.md)). | Proposé |
+| ADR-008 | Format des erreurs | `ErrorOut` et `X-Request-ID` ([fichier](../adr/0008-format-uniforme-des-erreurs.md)) — non implémenté. | Accepté (D1), à réaliser |
 
 ### ADR-001 — Stratégie de verrouillage du stock
 
@@ -213,14 +218,16 @@ flowchart TB
 
 | Élément | Architecture décrite | État d'implémentation dans ce document |
 |---|---|---|
-| API FastAPI et authentification | Oui | À vérifier dans le dépôt |
-| Catalogue et administration | Oui | À vérifier dans le dépôt |
-| Web React/Vite | Oui | À vérifier dans le dépôt |
-| Mobile React Native/Expo | Oui | À vérifier dans le dépôt |
-| Bureau WPF/.NET 8 | Oui | À vérifier dans le dépôt |
-| Paiement, stocks et cueillette | Oui, cible des jalons suivants | À vérifier dans le dépôt |
-| RAG | Oui, cible des jalons suivants | À vérifier dans le dépôt |
-| Déploiement public | Cible décrite | Fournisseur et URL à confirmer |
+| API FastAPI et authentification | Oui | **Fusionné** sur `main` (PR #21) ; 119 tests ; CI verte |
+| Catalogue et administration | Oui | **En PR** #29 (API ; CI verte ; 329 tests locaux) |
+| Web React/Vite | Oui | **En PR** #30 (React 18 + Vite 6 ; CI `web-ci` verte) |
+| Mobile React Native/Expo | Oui | **En PR** #31 (Expo SDK 58, React 19 — ADR-007 ; CI `mobile-ci` verte) |
+| Bureau WPF/.NET 8 | Oui | **En PR** #32 (MVVM ; CI `desktop-ci` verte) |
+| Paiement, stocks et cueillette | Oui, cible des jalons suivants | Tables créées (PR #29) ; aucune route (L2) |
+| RAG | Oui, cible des jalons suivants | Non commencé |
+| Déploiement public | Cible décrite | **Non déployé** ; procédure Neon + Render + Vercel préparée (PR #33) |
+
+État au 21 novembre 2026 : « en PR » signifie poussé, contrôles GitHub au vert, **non fusionné**.
 
 **Preuves attendues pour la validation L1 :** contrat OpenAPI versionné, migrations reproductibles, tests d'authentification/catalogue/administration, données d'amorçage (trois magasins et au moins 150 produits), connexion des trois clients à l'API de démonstration, résultats CI et liens de déploiement. Les preuves seront ajoutées sans confondre architecture et état d'avancement.
 
@@ -230,5 +237,6 @@ flowchart TB
 |---|---|
 | Initiale | Document de six pages : contexte C4, conteneurs C4, choix technologiques et tableau de trois ADR. |
 | 1.1 | Diagrammes convertis en Mermaid; ajout du C4 composants, détail des ADR, sécurité, déploiement et traçabilité, sans changer les choix initiaux. |
+| 1.2 | État de réalisation réel (PR #21, #29 à #33) ; ADR 004 à 008 ajoutés dans `docs/adr/` ; ADR 001 à 003 inchangés. |
 
 **Décisions ouvertes :** auteur et approbateur; approbation des ADR; hébergeur et URL de démonstration; mécanisme des tâches asynchrones; stockage et rafraîchissement des jetons Mobile/Bureau; preuves de conformité de l'implémentation.

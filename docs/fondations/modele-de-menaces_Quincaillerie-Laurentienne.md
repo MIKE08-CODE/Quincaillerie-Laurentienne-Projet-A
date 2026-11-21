@@ -3,7 +3,7 @@
 |  |  |
 | :---- | :---- |
 | **Livrable** | L1 — Fondations (`v0.1.0`) |
-| **Version documentaire** | 1.1 |
+| **Version documentaire** | 1.2 |
 | **Statut** | Révisé — validations en attente |
 | **Auteur** | \[à compléter\] |
 | **Flux analysés** | Paiement et cueillette en magasin |
@@ -215,9 +215,37 @@ sequenceDiagram
 - Réexaminer ce modèle lors de changements des flux, des rôles, des prestataires, après incident et avant la mise en production des parcours.
 - À valider : responsable des risques, méthode de cotation, procédure de remise, MFA et acceptation des risques résiduels.
 
+## 8. État des mesures au L1 (vérifié le 21 novembre 2026)
+
+Les flux analysés (paiement, cueillette) relèvent du **L2** : leurs mesures propres ne sont pas encore
+implémentées. Le tableau distingue ce qui existe réellement dans le code.
+
+| \# | Mesure (§4) | État réel | Preuve |
+| :-- | :-- | :-- | :-- |
+| 1 | Authentification sécurisée | **Implémentée** (fusionnée) : JWT d'accès ≤ 15 min, rafraîchissement en cookie httpOnly/Secure/SameSite, Argon2id, verrouillage progressif | PR #21 ; tests `test_tokens`, `test_lockout`, `test_password_policy` |
+| 2 | Signature des webhooks | Non implémentée (L2) | — |
+| 3 | Prix et taxes côté serveur, cents | **Partielle** : prix en cents entiers (BIGINT, CHECK ≥ 0) ; calcul des taxes au L2 ; CHECK `total = sous-total − remise + TPS + TVQ` sur `orders` | PR #29 |
+| 4 | Verrouillage du stock | **Partielle** : CHECK `0 ≤ reserved ≤ on_hand`, mouvements sous `SELECT … FOR UPDATE` ; réservations au L2 | PR #29 ; `test_inventory` |
+| 5 | Idempotence des webhooks | **Partielle** : `payment_events.stripe_event_id` en clé primaire ; traitement au L2 | PR #29 |
+| 6 | Machine à états de la commande | **Partielle** : statuts contrôlés par CHECK ; transitions au L2 | PR #29 |
+| 7 | Historique et audit | **Partielle** : `order_status_history` créée ; grand livre `stock_movements` en ajout seulement (déclencheur) ; `audit_logs` non créée | PR #29 ; ADR-005 |
+| 8 | Rôle, propriété, magasin | **Implémentée** pour les routes existantes : dépendances `require_roles`, `require_store_access` ; routes `/admin/*` réservées à l'administrateur avec MFA (matrice testée sur les 15 routes) | PR #21, PR #29 ; `test_rbac`, `test_admin_catalog` |
+| 9 | Journaux sans données personnelles, secrets hors dépôt | **Implémentée** : journaux de sécurité sans courriel ni mot de passe ; Gitleaks, secret scanning et push protection actifs | `security` (CI) |
+| 10 | Expiration des réservations, limitation de débit | **Partielle** : limitation de débit (connexion, inscription, catalogue public 120/min) ; réservations au L2 | `test_catalog_api` |
+| 11 | MFA du personnel | **Implémentée** (en avance sur le L3) : TOTP, routes protégées refusées sans MFA | `test_mfa`, `test_admin_catalog` |
+| 12 | Jeton de cueillette | **Partielle** : `orders.pickup_token_hash` (empreinte seulement, unique) ; génération et validation au L2 | PR #29 |
+| 13 | Messages d'erreur génériques | **Implémentée** pour l'authentification (aucune énumération) ; format `ErrorOut` prévu (ADR-008) | `test_register`, `test_password_reset` |
+
+**Nouvelle frontière exposée au L1** : l'administration du catalogue (`/api/v1/admin/*`). Menaces
+traitées : élévation de privilège (rôle admin + MFA exigés, refus testé pour chaque autre rôle),
+altération (validation stricte des entrées, champs inconnus refusés), injection (requêtes paramétrées,
+recherche par `websearch_to_tsquery`), contenu malveillant d'image (URL `https://` seulement, sans
+identifiants, hôte valide ; aucun fichier téléversé).
+
 ### Historique documentaire
 
 | Version | Modification | Statut |
 | :-- | :-- | :-- |
 | 1.0 | Document initial : FT1–FT4, 19 menaces, 13 mesures | Source |
 | 1.1 | Diagrammes Mermaid, précisions, cotation, plan de tests et limites | À valider |
+| 1.2 | État réel des mesures au L1 (§8) et frontière de l'administration du catalogue | À valider |

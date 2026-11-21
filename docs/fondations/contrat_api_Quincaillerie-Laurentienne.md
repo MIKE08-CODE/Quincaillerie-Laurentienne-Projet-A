@@ -5,7 +5,7 @@
 | **Livrable** | L1 — Fondations (cible applicative `v0.1.0`) |
 | **Auteur** | \[à compléter\] |
 | **Version de l'API** | `v1` |
-| **Version documentaire** | `1.2` — 21 novembre 2026 |
+| **Version documentaire** | `1.3` — 21 novembre 2026 |
 | **Statut** | Contrat cible L1 ; conformité au code et déploiement à vérifier |
 | **Sources** | Cahier des charges — Projet A (Quincaillerie Laurentienne) : A.7, A.4, A.5, A.6, A.11, section 4 et section 5 (ENF) |
 
@@ -540,11 +540,11 @@ Des filtres supplémentaires sur `GET /products` (fourchette de prix, marque, di
 
 | Domaine | Contrat documentaire | OpenAPI généré | Tests / preuve | Statut |
 | :--- | :--- | :--- | :--- | :--- |
-| Authentification L1 | §7.1, §7.5 | À comparer (`GET /auth/me` inclus s'il existe) | À renseigner | Non vérifié |
-| Catalogue / recherche | §7.2 | À comparer | À renseigner | Non vérifié |
-| Administration produits / catégories | §7.3, §7.5 | À comparer | À renseigner | Non vérifié |
-| Santé | §7.4 | À comparer (`/health` peut être hors `/api/v1`) | À renseigner | Non vérifié |
-| Formats d'erreur / sécurité | §§2–6, §8 | À comparer | À renseigner | Non vérifié |
+| Authentification L1 | §7.1, §7.5 | Comparé (§18.1) | 119 tests ; CI `api-ci` | **Vérifié** — écarts consignés |
+| Catalogue / recherche | §7.2 | Comparé (§18.1) | PR #29 (CI verte) | **Vérifié** (non fusionné) |
+| Administration produits / catégories | §7.3, §7.5 | Comparé (§18.1) | PR #29 (CI verte) | **Vérifié** (non fusionné) — écarts consignés |
+| Santé | §7.4 | `GET /health` (hors `/api/v1`) | CI `api-ci` (démarrage production) | **Vérifié** |
+| Formats d'erreur / sécurité | §§2–6, §8 | Comparé (§18.2) | — | **Écart** : `ErrorOut` non implémenté (ADR-008) |
 | Routes L2/L3 | §§10, 15–17 | À comparer lors de leur implémentation | À renseigner par domaine | Contractuel, non vérifié |
 
 **Méthode :** exporter le schéma OpenAPI depuis l'application FastAPI effectivement exécutée, puis comparer méthodes, chemins, paramètres, schémas, codes de réponse et exigences de sécurité. Consigner les différences et rattacher les tests et preuves (commit, exécution CI, URL de démonstration). Ne pas inventer de résultat de test ou de fichier `openapi.json`.
@@ -581,6 +581,7 @@ Des filtres supplémentaires sur `GET /products` (fourchette de prix, marque, di
 | 1.0 | Non renseignée | Document initial (10 sections) |
 | 1.1 | 2026-11-21 | Clarification des statuts, sécurité, pagination, erreurs, traçabilité et validation OpenAPI ; routes et choix de base conservés |
 | 1.2 | 2026-11-21 | Extension du contrat aux domaines L2/L3 : méthodes, schémas, erreurs, règles métier, exemples et traçabilité ; sans présumer de leur implémentation |
+| 1.3 | 2026-11-21 | Conformité à l'OpenAPI réellement généré (§18) : routes implémentées et prévues, écarts consignés ; `PATCH` (DEC-03) et CRUD catégories/marques (DEC-04) tranchés |
 
 **Validation finale conditionnelle :** (1) confirmer les exigences et décisions ouvertes, (2) comparer le contrat au schéma FastAPI généré, (3) rattacher tests et preuves CI, (4) faire approuver la version par le responsable du projet. L'absence de ces preuves n'empêche pas la revue documentaire, mais interdit de déclarer le contrat techniquement vérifié.
 
@@ -847,3 +848,46 @@ Réponse illustrative :
 | API-10 | Harmonisation schémas et erreurs avec OpenAPI FastAPI réel | Contrat exploitable et testable |
 
 **Critère de complétude documentaire :** toutes les fonctionnalités Must de A.4/A.9 disposent d'un chemin ou d'une décision explicite; les fonctionnalités Should/Could sont identifiées sans inventer de route officielle. **Critère de validation technique, différé :** génération de `/openapi.json`, comparaison des routes et schémas, tests de contrat, validation de sécurité et approbation des décisions ouvertes. Le présent Markdown n'est **pas** un export OpenAPI exécutable.
+
+## 18. Conformité à l'OpenAPI réellement généré (L1)
+
+Source : `GET /openapi.json` de l'API exécutée au commit `852486c` (branche `feature/l1-catalogue`,
+**PR #29, non fusionnée**), exporté dans [`docs/api/openapi-l1.json`](../api/openapi-l1.json) (OpenAPI
+3.1.0, API `0.1.0`, 34 opérations). L'OpenAPI fait foi pour les routes implémentées (§ en-tête).
+
+### 18.1 Routes implémentées
+
+| Route | Exigence | Contrat | Écart constaté |
+|---|---|---|---|
+| `POST /auth/register` | A-AUTH-01 | §7.1 : 201 `UserOut` | **202** et message générique (pas d'énumération) ; champ `accept_privacy_policy` (+ `marketing_opt_in`) |
+| `POST /auth/verify-email` · `POST /auth/verify-email/resend` | A-AUTH-01 | §7.5 : 204 | **200** ; route `resend` ajoutée |
+| `POST /auth/login` | A-AUTH-02, 07 | 200 `TokenOut` ; 429 | Verrouillage en **423** (ADR-008 : 429 prévu) ; réponse de défi MFA possible ; `mfa_setup_required` |
+| `POST /auth/refresh` · `POST /auth/logout` | A-AUTH-02 | §7.1 | Conformes (cookie `ql_refresh`, chemin `/api/v1/auth`) |
+| `GET /auth/me` | — | Absente du contrat | **Ajoutée** : `role`, `is_email_verified`, `mfa_enabled`, `store_ids` |
+| `POST /auth/password/forgot` · `POST /auth/password/reset` | A-AUTH-04 | 202 · 204 | `reset` renvoie **200** |
+| `POST /auth/mfa/setup` · `/enable` · `/verify` | A-AUTH-06 | §10.2 (L3) | **Implémentées dès le L1** (en avance) |
+| `GET /categories` · `GET /stores` | A-CAT-01, 02 | §7.2 | Conformes (listes non paginées) |
+| `GET /products` | A-CAT-01 | §7.2 | Conforme ; paramètres ajoutés : `lang` (tri par nom), `brand_id` (A-CAT-04) ; catégorie inconnue → 404 |
+| `GET /products/{id}` · `/availability` | A-CAT-02 | §7.2 | Conformes ; aucune quantité exposée |
+| `GET /search` | A-CAT-03 | §7.2 | Conforme (`q` de 1 à 100 caractères) |
+| `GET`, `POST /admin/products` · `GET`, **`PATCH`**, `DELETE /admin/products/{id}` | A-ADM-01 | §7.3 : `PUT` | **`PATCH`** retenu (DEC-03 tranchée) ; `DELETE` désactive (204) |
+| `POST /admin/products/{id}/images` · `DELETE …/images/{image_id}` | A-ADM-01 | §7.5 : multipart | **Corps JSON avec URL `https://`** ; téléversement de fichiers (413/415) non implémenté |
+| `GET`, `POST /admin/categories` · `PATCH`, `DELETE /admin/categories/{id}` | A-ADM-01 | §7.5 : à définir | DEC-04 tranchée : `PATCH` ; `DELETE` refusé (409) si sous-catégories ou produits ; cycle → 422 |
+| `GET`, `POST /admin/brands` · `PATCH`, `DELETE /admin/brands/{id}` | A-ADM-01 | Absentes | **Ajoutées** (ADR-004) ; `DELETE` désactive |
+| `GET /health` | ENF-13 | §7.4 | Conforme |
+
+### 18.2 Écarts transversaux
+
+- **Format des erreurs** : l'API renvoie `{"detail": {"code", "message"}}` (422 : `errors[{field, reason}]`),
+  sans `request_id` ni `X-Request-ID`. Le format `ErrorOut` du §6 est **prévu** (ADR-008, sous-lot 0.A).
+- **Schémas** : `ProductSummary`, `ProductDetail`, `StoreAvailability`, `CategoryNode`, `StoreOut` et
+  `Page[T]` correspondent au §8.3 ; `ProductCreate` reçoit `brand_id` au lieu de `brand` (ADR-004) ;
+  `ProductAdminOut` ajoute `brand_id`, `created_at`, `updated_at`.
+- **Limitation de débit** : connexion et inscription (existant) ; lecture publique du catalogue à
+  120 requêtes/min/IP (testé).
+
+### 18.3 Routes prévues (non implémentées)
+
+Toutes les routes du §10 (panier, checkout, webhooks Stripe, commandes, cueillette, stocks du personnel,
+profil, agent conversationnel, administration des utilisateurs, promotions, rapports, audit, vie
+privée) restent **prévues** ; aucune n'est présente dans l'OpenAPI généré.
