@@ -1,0 +1,101 @@
+# Intégration continue de l'application de bureau C# .NET 8 WPF (cahier des charges §6.2).
+#
+# Étapes : restauration → build Release (avertissements traités comme des erreurs) → tests xUnit
+# (hors catégorie Integration, qui exige une API réelle) → audit des paquets NuGet vulnérables.
+# WPF ne se compile que sous Windows : runner windows-latest.
+
+name: desktop-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  changes:
+    name: Détection des changements
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      desktop: ${{ github.event_name != 'pull_request' || steps.filter.outputs.desktop == 'true' }}
+    steps:
+      - name: Fichiers modifiés par la PR
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            desktop:
+              - 'desktop/**'
+              - '.github/workflows/desktop-ci.yml'
+
+  build:
+    name: Build et tests (.NET 8, Windows)
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: desktop
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restauration
+        run: dotnet restore QuincaillerieLaurentienne.Desktop.sln
+
+      - name: Build Release (avertissements = erreurs)
+        run: dotnet build QuincaillerieLaurentienne.Desktop.sln -c Release --no-restore
+
+      - name: Tests xUnit (hors intégration)
+        run: dotnet test QuincaillerieLaurentienne.Desktop.sln -c Release --no-build --filter "Category!=Integration"
+
+      - name: Audit des paquets NuGet vulnérables
+        run: |
+          $report = dotnet list QuincaillerieLaurentienne.Desktop.sln package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Output $report
+          if ($report -match "has the following vulnerable packages") { throw "Paquets NuGet vulnérables détectés." }
+
+  result:
+    name: desktop-ci
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Synthèse des jobs
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+          import sys
+
+          results = {job: data["result"] for job, data in json.loads(os.environ["NEEDS"]).items()}
+          for job, result in results.items():
+              print(f"{job}: {result}")
+          ok = results.get("changes") == "success" and results.get("build") in ("success", "skipped")
+          sys.exit(0 if ok else 1)
