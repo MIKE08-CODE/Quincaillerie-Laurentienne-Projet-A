@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1.routers import auth
+from app.api.v1.routers import admin_catalog, auth, catalog
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.rate_limit import limiter
@@ -56,6 +56,16 @@ TAGS_METADATA = [
         "name": "authentification",
         "description": "Comptes, connexion, jetons, réinitialisation du mot de passe et MFA "
         "(cahier des charges, module A.4.1 : A-AUTH-01 à A-AUTH-07).",
+    },
+    {
+        "name": "catalogue",
+        "description": "Catalogue public : catégories, magasins, produits, disponibilité et recherche FR/EN "
+        "(A-CAT-01 à A-CAT-03). Aucune authentification.",
+    },
+    {
+        "name": "administration du catalogue",
+        "description": "Produits, images, catégories et marques (A-ADM-01). "
+        "Rôle administrateur et MFA requis.",
     },
     {"name": "santé", "description": "Surveillance de l'API par l'hébergeur."},
 ]
@@ -161,6 +171,8 @@ def create_app() -> FastAPI:
 
     # Routeurs des modules, tous sous /api/v1 (cahier A.7).
     app.include_router(auth.router, prefix=API_V1_PREFIX)
+    app.include_router(catalog.router, prefix=API_V1_PREFIX)
+    app.include_router(admin_catalog.router, prefix=API_V1_PREFIX)
 
     return app
 
