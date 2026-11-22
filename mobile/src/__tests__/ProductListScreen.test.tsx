@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
-import { ProductListScreen } from "../screens/ProductListScreen";
+import { ProductListScreen, ProductThumb } from "../screens/ProductListScreen";
 
 const categories = [
   { id: "c0", slug: "outils", name_fr: "Outils", name_en: "Tools", children: [] },
@@ -110,5 +110,18 @@ describe("ProductListScreen", () => {
     );
     await render(<ProductListScreen lang="fr" />);
     expect(await screen.findByText("Impossible de charger le catalogue.")).toBeTruthy();
+  });
+});
+
+describe("ProductThumb", () => {
+  it("affiche l'image distante, puis l'image de remplacement si elle ne se charge pas", async () => {
+    await render(<ProductThumb uri="https://images.inexistant.example/a.jpg" />);
+    await fireEvent(screen.getByTestId("product-image"), "error");
+    expect(screen.getByTestId("product-placeholder")).toBeTruthy();
+  });
+
+  it("affiche l'image de remplacement quand il n'y a pas d'image", async () => {
+    await render(<ProductThumb uri={null} />);
+    expect(screen.getByTestId("product-placeholder")).toBeTruthy();
   });
 });

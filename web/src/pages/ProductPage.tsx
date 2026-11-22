@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { catalogApi } from "../api/catalog";
 import { AvailabilityBadge } from "../components/AvailabilityBadge";
+import { ProductImage } from "../components/ProductImage";
 import { Empty, ErrorMessage, Loading } from "../components/StatusMessage";
 import { useApi } from "../hooks/useApi";
 import { useReload } from "../hooks/useReload";
@@ -52,11 +53,12 @@ export function ProductPage() {
       </Link>
       <div className="product__layout">
         <div className="product__media">
-          {image ? (
-            <img src={image.url} alt={localized(image, "alt", lang) || name} width={480} height={360} />
-          ) : (
-            <div className="card__image">{t("product.noImage")}</div>
-          )}
+          <ProductImage
+            src={image?.url}
+            alt={image ? localized(image, "alt", lang) || name : ""}
+            width={480}
+            height={360}
+          />
         </div>
         <div className="product__info">
           {p.brand && (
