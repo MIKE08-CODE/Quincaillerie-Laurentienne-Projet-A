@@ -5,5 +5,6 @@ public sealed class ApiSettings
 {
     public string BaseUrl { get; set; } = "http://localhost:8000/api/v1";
 
-    public int TimeoutSeconds { get; set; } = 10;
+    // 60 s : le réveil de l'API sur l'offre gratuite de Render prend jusqu'à une minute environ.
+    public int TimeoutSeconds { get; set; } = 60;
 }
