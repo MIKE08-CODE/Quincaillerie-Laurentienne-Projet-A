@@ -13,7 +13,7 @@ exigence, avec les preuves et le niveau de preuve (test automatisé, HTTP, démo
 | 5 | Contrat OpenAPI | CONFORME | — | — |
 | 6 | Incrément fonctionnel déployé | PARTIEL | Fusionner #49, #50, #51 ; Brevo ; comptes de démonstration ; stockage des images ; démonstration mobile ; captures | Responsable et équipe |
 | 7 | DevOps | PARTIEL | Décider de l'approbation exigée (§6.1) et des contrôles obligatoires ; alerte n° 2 | Responsable |
-| 8 | Gestion de projet | MANQUANT | Tableau Projects ; sprints, heures et comptes rendus réels | Équipe |
+| 8 | Gestion de projet | PARTIEL | [Tableau](https://github.com/users/MIKE08-CODE/projects/1) prêt ; sprints, responsables, heures et comptes rendus réels | Équipe |
 
 **La L1 n'est pas encore livrable** : artéfact 8 sans données, démonstration mobile non faite,
 courriels inactifs en production, étiquette `v0.1.0` absente.
@@ -25,6 +25,6 @@ courriels inactifs en production, étiquette `v0.1.0` absente.
 2. Configurer Brevo dans Render, puis faire le test réel (guide de déploiement §4 bis).
 3. Autoriser et créer les comptes de démonstration (`procedure-comptes-demo.md`).
 4. Accord sur Cloudinary (ADR-009) — ou accepter la limitation pour L1.
-5. `gh auth refresh -s project`, puis créer et remplir le tableau.
+5. Renseigner dans le [tableau](https://github.com/users/MIKE08-CODE/projects/1) le sprint et le responsable de chaque élément (valeurs « À compléter »).
 6. Remplir sprints, feuilles de temps et comptes rendus ; répéter la démonstration et remplir les grilles.
 7. Faire signer le procès-verbal, puis autoriser l'étiquette `v0.1.0` et la version GitHub.

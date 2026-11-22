@@ -9,7 +9,7 @@
 | [Rapports de sprint S1 à S3](rapports-sprint-s1-s3.md) | Réalisations datées (Git) ; objectifs et rétrospectives | **À compléter par l'équipe** |
 | [Feuilles de temps](feuilles-de-temps.md) | Gabarit par membre | **À compléter** (aucune heure consignée) |
 | [Comptes rendus](../meetings/README.md) (`docs/meetings/`) | Gabarit et décisions déjà consignées | **À compléter** (aucune réunion consignée) |
-| [Tableau GitHub Projects](tableau-github-projects.md) | Colonnes et rattachement des issues | **À créer** (`gh auth refresh -s project`) |
+| [Tableau GitHub Projects](https://github.com/users/MIKE08-CODE/projects/1) ([description](tableau-github-projects.md)) | Issues, PR fusionnées, éléments L1, champs de suivi | Créé ; sprints, responsables et heures **à compléter** |
 | [Notes de version v0.1.0](notes-de-version-v0.1.0.md) | Nouveautés, tests, limitations | Prêtes à valider, non publiées |
 | [Plan de démonstration L1](plan-demonstration-l1.md) | 20 minutes, procédure mobile, grilles d'acceptation | Prêt, à répéter |
 | [Procédure des comptes de démonstration](procedure-comptes-demo.md) | Création et vérification, sans mot de passe exposé | Production : autorisation requise |

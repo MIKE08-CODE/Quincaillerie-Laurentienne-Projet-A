@@ -45,7 +45,7 @@ Statuts : **CONFORME** · **PARTIEL** · **MANQUANT** · **NON VÉRIFIABLE** (pr
 | 5 | Contrat OpenAPI | `docs/api/openapi-l1.json` (28 chemins avec #49) ; `/openapi.json` en ligne | — | — | CONFORME |
 | 6 | Incrément fonctionnel | Section 1 | Courriel, images, démonstration mobile | P0/P1 | PARTIEL |
 | 7 | DevOps | Ruleset `protect-main` ; 5 workflows verts sur `main` ; déploiements Render et Vercel automatiques ; CodeQL (Python, actions, JS/TS, C#) ; Dependabot (pip, npm, NuGet, actions) ; Gitleaks ; secret scanning ; README | **§6.1 : 0 approbation exigée au lieu d'1** ; contrôles `web-ci`, `mobile-ci`, `desktop-ci` non obligatoires ; alerte Dependabot n° 2 ouverte (risque R14) | P2 | PARTIEL (écart §6.1 assumé, à valider) |
-| 8 | Gestion de projet | `docs/gestion-projet/` | **Tableau GitHub Projects absent** (droit `project` manquant) ; sprints, feuilles de temps et comptes rendus **sans données de l'équipe** | **P0** | MANQUANT |
+| 8 | Gestion de projet | `docs/gestion-projet/` ; [tableau GitHub Projects n° 1](https://github.com/users/MIKE08-CODE/projects/1) (60 éléments : issues, PR fusionnées, éléments L1 ; champs Sprint, Priorité, Jalon, Exigence, PR fusionnées, Responsable, Heures, Preuve) | Structure prête ; **sprints, responsables, heures, comptes rendus et rétrospectives sans données de l'équipe** (valeur « À compléter ») | **P0** | PARTIEL |
 
 ## 3. Règles transversales
 
@@ -59,7 +59,7 @@ Statuts : **CONFORME** · **PARTIEL** · **MANQUANT** · **NON VÉRIFIABLE** (pr
 | §6.3 `.env` non versionné, `.env.example` versionné | | `.gitignore`, `.env.example` | — | CONFORME |
 | §6.3 Secrets dans le tableau de bord | | Render, Vercel ; Gitleaks : 0 fuite | — | CONFORME |
 | §6.3 Comptes de démonstration par rôle, identifiants en privé | Script d'amorçage | `app.seed.demo_accounts` (#38), `procedure-comptes-demo.md` | Non exécuté en production | PARTIEL |
-| §6.3 Bureau distribué par GitHub Releases ; mobile en APK ou lien Expo | | — | Aucun artefact distribué (pas de version GitHub, pas de build Expo) | MANQUANT (L1 : démonstration suffisante à confirmer) |
+| §6.3 Bureau distribué par GitHub Releases ; mobile en APK ou lien Expo | | Workflow `desktop-release` : paquet Windows autonome (ZIP + SHA-256) joint à une version **en brouillon** à la création de l'étiquette | Bureau : prêt, publié seulement après l'étiquette et votre relecture ; mobile : aucun APK ni lien Expo (compte Expo requis) | PARTIEL |
 | §6.3 Offres gratuites uniquement | | Neon, Render, Vercel gratuits ; aucune carte | — | CONFORME |
 | §8 Démonstration de 20 min + questions | Scénario | `plan-demonstration-l1.md` | Répétition à faire | PARTIEL |
 
@@ -73,6 +73,6 @@ Statuts : **CONFORME** · **PARTIEL** · **MANQUANT** · **NON VÉRIFIABLE** (pr
 | P4 | Vidéo ou captures du mobile (liste, recherche, fiche) connecté à l'API publique | Expo Go ou émulateur Android | A.11 mobile |
 | P5 | Capture de la fenêtre de bureau connectée à l'API publique | Windows | A.11 bureau |
 | P6 | Courriel de vérification reçu et lien ouvert jusqu'à « adresse vérifiée » ; idem réinitialisation | Après configuration Brevo | A-AUTH-01, A-AUTH-04 |
-| P7 | Tableau GitHub Projects (capture) | Après `gh auth refresh -s project` | Artéfact 8 |
+| P7 | Tableau GitHub Projects rempli par l'équipe (sprints, responsables, heures), puis capture | https://github.com/users/MIKE08-CODE/projects/1 | Artéfact 8 |
 | P8 | Feuilles de temps, comptes rendus, rapports de sprint remplis | Équipe | Artéfact 8 |
 | P9 | Procès-verbal d'approbation signé | `proces-verbal-approbation-l1.md` | Remise |
