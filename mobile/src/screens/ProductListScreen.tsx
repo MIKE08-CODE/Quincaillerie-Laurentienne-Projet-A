@@ -124,11 +124,7 @@ export function ProductListScreen({ lang }: { lang: Language }) {
           }
           renderItem={({ item }) => (
             <View style={styles.row} testID={`product-${item.sku}`}>
-              {item.main_image_url ? (
-                <Image source={{ uri: item.main_image_url }} style={styles.image} accessibilityIgnoresInvertColors />
-              ) : (
-                <View style={styles.image} />
-              )}
+              <ProductThumb uri={item.main_image_url} />
               <View style={styles.rowBody}>
                 {item.brand ? <Text style={styles.brand}>{item.brand}</Text> : null}
                 <Text style={styles.name}>{name(item)}</Text>
@@ -140,6 +136,27 @@ export function ProductListScreen({ lang }: { lang: Language }) {
         />
       )}
     </View>
+  );
+}
+
+/** Vignette du produit; image de remplacement locale si l'image est absente ou ne se charge pas. */
+export function ProductThumb({ uri }: { uri: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!uri || failed) {
+    return (
+      <View style={[styles.image, styles.placeholder]} testID="product-placeholder" accessible={false}>
+        <Text style={styles.placeholderText}>QL</Text>
+      </View>
+    );
+  }
+  return (
+    <Image
+      source={{ uri }}
+      style={styles.image}
+      onError={() => setFailed(true)}
+      testID="product-image"
+      accessibilityIgnoresInvertColors
+    />
   );
 }
 
@@ -184,6 +201,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   image: { width: 72, height: 72, borderRadius: 6, backgroundColor: "#e9ece6" },
+  placeholder: { alignItems: "center", justifyContent: "center" },
+  placeholderText: { color: "#9aa59c", fontWeight: "700", fontSize: 18 },
   rowBody: { flex: 1 },
   brand: { color: "#5b6660", fontSize: 12, textTransform: "uppercase" },
   name: { fontSize: 15, fontWeight: "600", color: "#1f2a24" },

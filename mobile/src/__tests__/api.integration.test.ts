@@ -5,6 +5,7 @@
  * Test d'intégration FACULTATIF : le client HTTP de l'application interroge une API réelle.
  *
  *   API_INTEGRATION_URL=http://localhost:8000/api/v1 npm test -- api.integration
+ *   API_INTEGRATION_URL=https://quincaillerie-laurentienne-api.onrender.com/api/v1 npm test -- api.integration
  *
  * Sans API_INTEGRATION_URL, le test est ignoré (la CI n'a pas d'API à joindre).
  * La configuration Jest de React Native remplace `fetch` par une simulation : on fournit ici un
@@ -21,9 +22,10 @@ interface NodeResponse {
 }
 
 function nodeFetch(url: string): Promise<Response> {
-  const http = require("node:http");
+  // https pour une API déployée (Render), http pour une API locale.
+  const client = require(url.startsWith("https:") ? "node:https" : "node:http");
   return new Promise((resolve, reject) => {
-    http
+    client
       .get(url, (res) => {
         let body = "";
         res.setEncoding("utf8");
