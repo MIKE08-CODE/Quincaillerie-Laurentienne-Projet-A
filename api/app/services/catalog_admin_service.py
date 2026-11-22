@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.errors import Conflict, NotFound, ValidationFailed
 from app.models import Brand, Category, Product, ProductImage
 from app.schemas.catalog import (
@@ -26,6 +27,8 @@ from app.schemas.catalog import (
     ProductUpdate,
 )
 from app.services import catalog_service
+from app.services.image_storage import ImageStorage
+from app.services.image_validation import validate_image
 
 _UNIQUE_ERRORS = {
     "uq_products_sku": ("sku_taken", "Ce SKU est déjà utilisé."),
@@ -139,12 +142,49 @@ def add_image(db: Session, product_id: uuid.UUID, data: ImageCreate) -> ProductI
     return image
 
 
-def delete_image(db: Session, product_id: uuid.UUID, image_id: uuid.UUID) -> None:
+def upload_image(
+    db: Session,
+    product_id: uuid.UUID,
+    data: bytes,
+    *,
+    declared_type: str | None,
+    alt_fr: str | None,
+    alt_en: str | None,
+    storage: ImageStorage,
+) -> ProductImage:
+    """Valide le fichier, le confie au stockage persistant, puis l'ajoute au produit.
+
+    Le nom du fichier est généré par le serveur (jamais celui du client). Si l'enregistrement en base
+    échoue, le fichier déjà stocké est supprimé pour ne pas laisser d'orphelin.
+    """
+    get_product(db, product_id)  # 404 avant tout traitement du fichier
+    settings = get_settings()
+    info = validate_image(
+        data,
+        declared_type=declared_type,
+        max_bytes=settings.image_max_bytes,
+        max_dimension=settings.image_max_dimension,
+    )
+    key = f"products/{product_id}/{uuid.uuid4().hex}.{info.extension}"
+    url = storage.save(key, data, info.content_type)
+    try:
+        return add_image(db, product_id, ImageCreate(url=url, alt_fr=alt_fr, alt_en=alt_en))
+    except Exception:
+        storage.delete(url)
+        raise
+
+
+def delete_image(
+    db: Session, product_id: uuid.UUID, image_id: uuid.UUID, storage: ImageStorage | None = None
+) -> None:
     image = db.get(ProductImage, image_id)
     if image is None or image.product_id != product_id:
         raise NotFound("image_not_found", "Image introuvable.")
+    url = image.url
     db.delete(image)
     _commit(db)
+    if storage is not None:
+        storage.delete(url)  # sans effet pour une image désignée par une URL externe
 
 
 # ---------------------------------------------------------------------------

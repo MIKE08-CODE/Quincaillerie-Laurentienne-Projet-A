@@ -1631,12 +1631,200 @@
         }
       }
     },
+    "/api/v1/admin/products/{product_id}/images/upload": {
+      "post": {
+        "tags": [
+          "administration du catalogue"
+        ],
+        "summary": "Téléverser une image (JPEG, PNG ou WebP)",
+        "description": "Le type est vérifié d'après le CONTENU du fichier (signature), pas seulement l'en-tête.\n\nLimites : taille `IMAGE_MAX_BYTES` (5 Mio par défaut), dimensions `IMAGE_MAX_DIMENSION`\n(6000 pixels par côté). Le fichier est confié à un stockage persistant; l'API n'en garde aucun.",
+        "operationId": "upload_image_api_v1_admin_products__product_id__images_upload_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "alt_fr",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 250
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Texte de remplacement (FR).",
+              "title": "Alt Fr"
+            },
+            "description": "Texte de remplacement (FR)."
+          },
+          {
+            "name": "alt_en",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 250
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Texte de remplacement (EN).",
+              "title": "Alt En"
+            },
+            "description": "Texte de remplacement (EN)."
+          },
+          {
+            "name": "content-type",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Type"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, expiré ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rôle administrateur requis, ou MFA non complétée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Données invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Fichier trop lourd (`image_too_large`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Type refusé ou incohérent (`unsupported_image_type`, …).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Stockage non configuré (`image_storage_not_configured`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "Octets du fichier image, avec l'en-tête Content-Type correspondant.",
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/products/{product_id}/images/{image_id}": {
       "delete": {
         "tags": [
           "administration du catalogue"
         ],
         "summary": "Retirer une image",
+        "description": "Retire l'image du produit; un fichier téléversé est aussi supprimé du stockage.",
         "operationId": "delete_image_api_v1_admin_products__product_id__images__image_id__delete",
         "security": [
           {
