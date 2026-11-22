@@ -98,6 +98,15 @@ Réglages Vercel : répertoire racine `web`, commande d'installation `npm ci`, a
 Chacun a un test d'intégration facultatif à lancer contre l'API déployée (voir leurs README) : c'est la
 preuve attendue pour l'artéfact 6 (« clients connectés à l'API en ligne »).
 
+**Distribution du bureau (§6.3)** : le workflow `desktop-release` produit un exécutable Windows autonome
+(aucun runtime .NET à installer), avec un `appsettings.json` pointant vers l'API publique, compressé en
+ZIP avec son empreinte SHA-256. Sur une PR ou un lancement manuel, il ne fait que vérifier le paquet ; à la
+création d'une étiquette `v*` par le responsable, il crée une version GitHub **en brouillon**, que le
+responsable relit puis publie. En local : `./desktop/scripts/package.ps1 -ApiUrl <URL https> -Version <v>`.
+
+**Distribution du mobile (§6.3)** : APK ou lien de build Expo à produire avec un compte Expo gratuit
+(`eas build -p android --profile preview`) ; non préparé (compte et décision du responsable).
+
 ## 4 bis. Activer les courriels (Brevo) 🔐
 
 Nécessaire pour A-AUTH-01 (vérification du courriel) et A-AUTH-04 (réinitialisation). Le SMTP sortant
