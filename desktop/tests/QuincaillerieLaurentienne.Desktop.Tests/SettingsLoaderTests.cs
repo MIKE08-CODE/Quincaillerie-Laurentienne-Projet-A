@@ -16,6 +16,18 @@ public sealed class SettingsLoaderTests : IDisposable
     }
 
     [Fact]
+    public void Default_timeout_covers_the_render_cold_start()
+    {
+        // L'API gratuite de Render se réveille en une minute environ : 10 s faisait échouer le premier appel.
+        Assert.Equal(60, new QuincaillerieLaurentienne.Desktop.Models.ApiSettings().TimeoutSeconds);
+        var shipped = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        if (File.Exists(shipped))
+        {
+            Assert.Equal(60, SettingsLoader.Load(shipped, environmentOverride: "").TimeoutSeconds);
+        }
+    }
+
+    [Fact]
     public void Reads_the_api_url_from_the_configuration_file()
     {
         File.WriteAllText(file, """{"Api":{"BaseUrl":"https://api.example.com/api/v1/","TimeoutSeconds":7}}""");

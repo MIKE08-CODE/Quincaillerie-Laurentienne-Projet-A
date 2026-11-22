@@ -17,3 +17,10 @@ describe("configuration de l'URL de l'API", () => {
     );
   });
 });
+
+describe("délai des requêtes", () => {
+  it("couvre le réveil de l'API gratuite de Render (une minute environ)", () => {
+    const { API_TIMEOUT_MS } = jest.requireActual<typeof import("../api/client")>("../api/client");
+    expect(API_TIMEOUT_MS).toBeGreaterThanOrEqual(60_000);
+  });
+});
