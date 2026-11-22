@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { ProductSummary } from "../api/catalog";
 import { currentLanguage } from "../i18n";
 import { formatPrice, localized } from "../i18n/format";
+import { ProductImage } from "./ProductImage";
 
 export function ProductCard({ product }: { product: ProductSummary }) {
   const { t } = useTranslation();
@@ -12,12 +13,8 @@ export function ProductCard({ product }: { product: ProductSummary }) {
   return (
     <li className="card">
       <Link to={`/produits/${product.id}`} className="card__link">
-        <div className="card__image" aria-hidden={product.main_image_url ? undefined : true}>
-          {product.main_image_url ? (
-            <img src={product.main_image_url} alt="" loading="lazy" width={240} height={180} />
-          ) : (
-            <span>{t("product.noImage")}</span>
-          )}
+        <div className="card__image">
+          <ProductImage src={product.main_image_url} alt="" width={240} height={180} lazy />
         </div>
         <div className="card__body">
           {product.brand && <p className="card__brand">{product.brand}</p>}
