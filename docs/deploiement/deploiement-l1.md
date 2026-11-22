@@ -98,6 +98,45 @@ Réglages Vercel : répertoire racine `web`, commande d'installation `npm ci`, a
 Chacun a un test d'intégration facultatif à lancer contre l'API déployée (voir leurs README) : c'est la
 preuve attendue pour l'artéfact 6 (« clients connectés à l'API en ligne »).
 
+## 4 bis. Activer les courriels (Brevo) 🔐
+
+Nécessaire pour A-AUTH-01 (vérification du courriel) et A-AUTH-04 (réinitialisation). Le SMTP sortant
+étant bloqué sur l'offre gratuite de Render, l'API utilise l'**API HTTPS** de Brevo. Offre gratuite :
+300 envois par jour, sans carte bancaire (à revérifier sur brevo.com au moment de l'inscription) ; les
+messages portent la mention « Sent with Brevo ».
+
+**À faire par le responsable (aucune de ces étapes ne peut être faite par l'outillage) :**
+
+1. Créer un compte gratuit sur brevo.com, **sans** saisir de carte bancaire.
+2. Dans la gestion des expéditeurs de Brevo, ajouter l'adresse d'expédition et la **confirmer** par le
+   lien reçu. Une adresse de messagerie gratuite (p. ex. Gmail) peut être refusée ou classée en
+   indésirables par certains destinataires (DMARC) ; un domaine authentifié est plus fiable mais n'est
+   **pas** nécessaire pour la démonstration.
+3. Créer une **clé d'API** (section des clés SMTP et API). La copier une seule fois ; ne jamais la
+   coller dans Git, une issue, une PR ou une conversation.
+4. Dans Render → service `quincaillerie-laurentienne-api` → *Environment* :
+
+   | Variable | Valeur |
+   |---|---|
+   | `EMAIL_BACKEND` | `brevo` |
+   | `EMAIL_FROM_ADDRESS` | l'adresse confirmée à l'étape 2 |
+   | `EMAIL_FROM_NAME` | `Quincaillerie Laurentienne` (facultatif) |
+   | `BREVO_API_KEY` | la clé de l'étape 3 (**secret**) |
+   | `WEB_BASE_URL` | `https://quincaillerie-laurentienne-seven.vercel.app` (base des liens envoyés) |
+
+   Enregistrer : Render redéploie. Si `BREVO_API_KEY` ou `EMAIL_FROM_ADDRESS` manque, **l'API refuse de
+   démarrer** (validation de la configuration) : corriger la variable, rien n'est envoyé entre-temps.
+5. **Test réel** (après la fusion de la PR #50, qui crée les pages du site) :
+   - s'inscrire sur `/inscription` avec une adresse **vous appartenant** ;
+   - recevoir le courriel et ouvrir le lien → page « Votre adresse est vérifiée » ;
+   - `/mot-de-passe-oublie` → courriel reçu → nouveau mot de passe → connexion réussie ;
+   - vérifier dans Render → *Logs* qu'aucun lien, jeton ni adresse n'apparaît (seulement
+     au plus un message « Échec de l'envoi du courriel « verify » … » en cas d'erreur, et rien en cas
+     de succès).
+
+   Conserver les captures (preuve P6 de la matrice de traçabilité). **Tant que ce test n'est pas
+   concluant, les courriels ne sont pas déclarés opérationnels.**
+
 ## 5. Redéployer, revenir en arrière
 
 - **Redéployer** : fusionner une PR sur `main` (déploiement automatique), ou « Manual Deploy » dans
@@ -115,7 +154,7 @@ preuve attendue pour l'artéfact 6 (« clients connectés à l'API en ligne »).
 | D3 | Extensions sur Neon | Migration impossible si `unaccent` ne peut pas être créée | Vérifier à l'étape 1 |
 | D4 | Mise en veille (offres gratuites) | Première requête lente après inactivité (Render) | Réveiller l'API avant la démonstration |
 | D5 | Amorçage en production | Données fictives de démonstration en production (voulu pour la L1) | Confirmer |
-| D6 | Stockage des images | Images désignées par URL ; aucun téléversement | Décision au L2 |
+| D6 | Stockage des images | Téléversement validé (PR #49) mais **sans stockage persistant** : 503 `image_storage_not_configured` ; le disque de Render est éphémère | Accord sur Cloudinary gratuit (ADR-009), puis saisie des secrets dans Render |
 | D7 | Contrôles CI obligatoires | Seuls `api-ci` et `security` sont exigés par le ruleset ; `web-ci`, `mobile-ci`, `desktop-ci` ne le sont pas | Décider de les ajouter au ruleset `protect-main` |
 
 ## 7. Preuves de déploiement (artéfacts 3, 6 et 7)
