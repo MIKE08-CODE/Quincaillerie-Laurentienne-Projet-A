@@ -19,6 +19,7 @@ ADMIN_ROUTES = [
     ("PATCH", f"/products/{ANY_ID}"),
     ("DELETE", f"/products/{ANY_ID}"),
     ("POST", f"/products/{ANY_ID}/images"),
+    ("POST", f"/products/{ANY_ID}/images/upload"),
     ("DELETE", f"/products/{ANY_ID}/images/{ANY_ID}"),
     ("GET", "/categories"),
     ("POST", "/categories"),

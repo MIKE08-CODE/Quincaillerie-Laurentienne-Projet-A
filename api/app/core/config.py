@@ -77,6 +77,14 @@ class Settings(BaseSettings):
     email_from_name: str = "Quincaillerie Laurentienne"
     brevo_api_key: SecretStr | None = None
 
+    # --- Téléversement des images de produits (A-ADM-01) ---
+    # disabled : téléversement refusé (503) tant qu'aucun stockage persistant n'est choisi;
+    # memory : gardées en mémoire (tests seulement). Le disque de Render est éphémère : il n'est
+    # jamais utilisé pour stocker des fichiers. Non renseigné : memory en test, disabled ailleurs.
+    image_storage_backend: Literal["disabled", "memory"] | None = None
+    image_max_bytes: int = Field(default=5 * 1024 * 1024, ge=10_000, le=10 * 1024 * 1024)
+    image_max_dimension: int = Field(default=6000, ge=100, le=10_000)  # pixels, par côté
+
     # --- Adresse IP du client pour la limitation de débit (ENF-05) ---
     # Vide (défaut) : adresse de la connexion TCP; AUCUN en-tête de proxy n'est cru.
     # Sinon : nom d'UN en-tête écrit par un relais de confiance qui écrase la valeur envoyée par le
@@ -89,6 +97,12 @@ class Settings(BaseSettings):
         if self.email_backend is not None:
             return self.email_backend
         return {"development": "console", "test": "memory"}.get(self.app_env, "disabled")
+
+    @property
+    def effective_image_storage_backend(self) -> str:
+        if self.image_storage_backend is not None:
+            return self.image_storage_backend
+        return "memory" if self.app_env == "test" else "disabled"
 
     @property
     def is_production(self) -> bool:
@@ -130,6 +144,8 @@ class Settings(BaseSettings):
             raise ValueError(
                 "EMAIL_BACKEND console/memory interdit en production (jetons dans les journaux)."
             )
+        if self.effective_image_storage_backend == "memory":
+            raise ValueError("IMAGE_STORAGE_BACKEND=memory interdit en production (images perdues).")
         key = self.secret_key.get_secret_value()
         if key.lower() in _PLACEHOLDER_SECRETS or len(key) < 32:
             raise ValueError("SECRET_KEY doit être une valeur aléatoire d'au moins 32 caractères.")

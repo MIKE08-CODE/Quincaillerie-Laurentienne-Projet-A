@@ -43,6 +43,20 @@ class Conflict(AppError):
     status_code = 409
 
 
+class PayloadTooLarge(AppError):
+    status_code = 413
+
+
+class UnsupportedMediaType(AppError):
+    status_code = 415
+
+
+class ServiceUnavailable(AppError):
+    """Dépendance externe absente ou non configurée (p. ex. stockage des images)."""
+
+    status_code = 503
+
+
 class NotFound(AppError):
     """Ressource inexistante, ou invisible pour cet utilisateur (produit désactivé, par exemple)."""
 
