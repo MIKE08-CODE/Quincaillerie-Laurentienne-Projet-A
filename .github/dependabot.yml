@@ -1,7 +1,6 @@
 # Mises à jour automatiques des dépendances (cahier §4.1, §6.2 « security », annexe D A06).
 # Écosystèmes : pip (/api), npm (/web, /mobile), nuget (/desktop) et GitHub Actions.
-# À fusionner APRÈS les PR qui créent web/, mobile/ et desktop/ : une entrée pointant vers un dossier
-# sans manifeste ferait échouer Dependabot.
+# Les trois dossiers clients existent sur main (PR #30, #31, #32).
 version: 2
 updates:
   - package-ecosystem: pip
