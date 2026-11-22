@@ -61,5 +61,5 @@ describe("API réelle", () => {
     expect(page.items[0]?.name_en).toBeTruthy();
     const categories = await getJson<unknown[]>("/categories");
     expect(categories.length).toBeGreaterThan(0);
-  });
+  }, 90_000); // réveil de l'API sur l'offre gratuite de Render (jusqu'à une minute environ)
 });
