@@ -1,7 +1,7 @@
 {
   "brand": "Quincaillerie Laurentienne",
   "tagline": "Three stores in the Laurentians since 1978",
-  "nav": { "home": "Home", "catalog": "Catalogue", "stores": "Stores" },
+  "nav": { "home": "Home", "catalog": "Catalogue", "stores": "Stores", "login": "Sign in", "account": "My account" },
   "language": { "switch": "Français", "label": "Change language" },
   "search": {
     "label": "Search for a product",
@@ -57,5 +57,82 @@
     "retry": "Try again"
   },
   "notFound": { "title": "Page not found", "back": "Back to home" },
+  "auth": {
+    "fields": {
+      "first_name": "First name",
+      "last_name": "Last name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "mfaCode": "6-digit code from your authenticator app"
+    },
+    "register": {
+      "title": "Create an account",
+      "submit": "Create my account",
+      "passwordHint": "At least 12 characters. Avoid common passwords and your name.",
+      "acceptPrivacy": "I accept the privacy policy (required).",
+      "marketing": "I want to receive promotions by email (optional).",
+      "done": "If this address can be used, a verification email has just been sent. Open the link it contains (valid for 24 hours) to activate your account.",
+      "haveAccount": "I already have an account"
+    },
+    "login": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "verify": "Verify code",
+      "forgot": "Forgot your password?",
+      "register": "Create an account"
+    },
+    "verify": {
+      "title": "Email verification",
+      "verifying": "Verifying…",
+      "verified": "Your address is verified. You can now sign in.",
+      "missing": "The verification link is incomplete.",
+      "resend": "Resend the verification email",
+      "resent": "If an unverified account exists for this address, a new email has just been sent."
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "submit": "Get a reset link",
+      "done": "If an account exists for this address, a reset email has just been sent (link valid for 30 minutes)."
+    },
+    "reset": {
+      "title": "New password",
+      "submit": "Save password",
+      "done": "Your password has been changed and your other sessions have been closed.",
+      "missing": "The reset link is incomplete or has already been used.",
+      "mismatch": "The two passwords do not match."
+    },
+    "account": {
+      "title": "My account",
+      "hello": "Hello {{name}}!",
+      "role": "Role",
+      "logout": "Sign out",
+      "signedOut": "You are not signed in.",
+      "mfaSetupRequired": "Your role requires multi-factor authentication: set it up before using staff features."
+    },
+    "roles": {
+      "client": "Customer",
+      "clerk": "Clerk",
+      "manager": "Manager",
+      "admin": "Administrator"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again later.",
+      "network_error": "The service is unreachable. Check your connection and try again.",
+      "rate_limited": "Too many attempts. Wait a few minutes before trying again.",
+      "invalid_credentials": "Incorrect email or password.",
+      "account_locked": "Account temporarily locked after several failures. Try again later.",
+      "email_not_verified": "Please verify your email address first using the link you received.",
+      "invalid_or_expired_token": "This link is invalid, expired or already used. Request a new one.",
+      "invalid_mfa_code": "Incorrect code.",
+      "invalid_mfa_token": "Verification expired. Sign in again.",
+      "password_too_short": "The password must be at least 12 characters long.",
+      "password_too_long": "The password is too long (128 characters maximum).",
+      "password_too_common": "This password is too common. Choose another one.",
+      "password_too_simple": "The password is too repetitive. Choose another one.",
+      "password_contains_personal_info": "The password must not contain your email, your name or the store name."
+    }
+  },
   "footer": "© Quincaillerie Laurentienne — demonstration project, no real sales."
 }

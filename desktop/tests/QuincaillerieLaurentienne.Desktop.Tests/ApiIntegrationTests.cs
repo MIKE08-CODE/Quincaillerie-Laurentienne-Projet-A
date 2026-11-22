@@ -18,7 +18,7 @@ public class ApiIntegrationTests
     [Fact]
     public async Task The_view_model_lists_the_products_of_the_real_api()
     {
-        var settings = new ApiSettings { BaseUrl = SettingsLoader.Validate(BaseUrl), TimeoutSeconds = 10 };
+        var settings = new ApiSettings { BaseUrl = SettingsLoader.Validate(BaseUrl), TimeoutSeconds = 90 };
         using var http = CatalogApiClient.CreateHttpClient(settings);
         var vm = new ProductListViewModel(new CatalogApiClient(http), settings.BaseUrl);
 

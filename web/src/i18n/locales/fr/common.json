@@ -1,7 +1,7 @@
 {
   "brand": "Quincaillerie Laurentienne",
   "tagline": "Trois magasins dans les Laurentides depuis 1978",
-  "nav": { "home": "Accueil", "catalog": "Catalogue", "stores": "Magasins" },
+  "nav": { "home": "Accueil", "catalog": "Catalogue", "stores": "Magasins", "login": "Connexion", "account": "Mon compte" },
   "language": { "switch": "English", "label": "Changer la langue" },
   "search": {
     "label": "Rechercher un produit",
@@ -57,5 +57,82 @@
     "retry": "Réessayer"
   },
   "notFound": { "title": "Page introuvable", "back": "Retour à l'accueil" },
+  "auth": {
+    "fields": {
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "email": "Courriel",
+      "password": "Mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "mfaCode": "Code à 6 chiffres de votre application d'authentification"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "submit": "Créer mon compte",
+      "passwordHint": "Au moins 12 caractères. Évitez les mots de passe courants et votre nom.",
+      "acceptPrivacy": "J'accepte la politique de confidentialité (obligatoire).",
+      "marketing": "Je souhaite recevoir les promotions par courriel (facultatif).",
+      "done": "Si l'adresse peut être utilisée, un courriel de vérification vient d'être envoyé. Ouvrez le lien qu'il contient (valide 24 heures) pour activer votre compte.",
+      "haveAccount": "J'ai déjà un compte"
+    },
+    "login": {
+      "title": "Connexion",
+      "submit": "Se connecter",
+      "verify": "Valider le code",
+      "forgot": "Mot de passe oublié ?",
+      "register": "Créer un compte"
+    },
+    "verify": {
+      "title": "Vérification du courriel",
+      "verifying": "Vérification en cours…",
+      "verified": "Votre adresse est vérifiée. Vous pouvez maintenant vous connecter.",
+      "missing": "Le lien de vérification est incomplet.",
+      "resend": "Renvoyer le courriel de vérification",
+      "resent": "Si un compte non vérifié existe pour cette adresse, un nouveau courriel vient d'être envoyé."
+    },
+    "forgot": {
+      "title": "Mot de passe oublié",
+      "submit": "Recevoir un lien de réinitialisation",
+      "done": "Si un compte existe pour cette adresse, un courriel de réinitialisation vient d'être envoyé (lien valide 30 minutes)."
+    },
+    "reset": {
+      "title": "Nouveau mot de passe",
+      "submit": "Enregistrer le mot de passe",
+      "done": "Votre mot de passe a été modifié et vos autres sessions ont été fermées.",
+      "missing": "Le lien de réinitialisation est incomplet ou a déjà été utilisé.",
+      "mismatch": "Les deux mots de passe ne correspondent pas."
+    },
+    "account": {
+      "title": "Mon compte",
+      "hello": "Bonjour {{name}} !",
+      "role": "Rôle",
+      "logout": "Se déconnecter",
+      "signedOut": "Vous n'êtes pas connecté.",
+      "mfaSetupRequired": "Votre rôle exige l'authentification multifacteur : configurez-la avant d'accéder aux fonctions du personnel."
+    },
+    "roles": {
+      "client": "Client",
+      "clerk": "Commis",
+      "manager": "Gérant",
+      "admin": "Administrateur"
+    },
+    "errors": {
+      "generic": "Une erreur est survenue. Réessayez plus tard.",
+      "network_error": "Le service est injoignable. Vérifiez votre connexion et réessayez.",
+      "rate_limited": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
+      "invalid_credentials": "Courriel ou mot de passe incorrect.",
+      "account_locked": "Compte temporairement bloqué après plusieurs échecs. Réessayez plus tard.",
+      "email_not_verified": "Vérifiez d'abord votre adresse courriel à l'aide du lien reçu.",
+      "invalid_or_expired_token": "Ce lien est invalide, expiré ou déjà utilisé. Demandez-en un nouveau.",
+      "invalid_mfa_code": "Code incorrect.",
+      "invalid_mfa_token": "La vérification a expiré. Reconnectez-vous.",
+      "password_too_short": "Le mot de passe doit contenir au moins 12 caractères.",
+      "password_too_long": "Le mot de passe est trop long (128 caractères au maximum).",
+      "password_too_common": "Ce mot de passe est trop courant. Choisissez-en un autre.",
+      "password_too_simple": "Le mot de passe est trop répétitif. Choisissez-en un autre.",
+      "password_contains_personal_info": "Le mot de passe ne doit pas contenir votre courriel, votre nom ni le nom du magasin."
+    }
+  },
   "footer": "© Quincaillerie Laurentienne — projet de démonstration, aucune vente réelle."
 }
