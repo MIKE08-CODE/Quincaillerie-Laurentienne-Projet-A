@@ -1,6 +1,6 @@
 # ADR-009 — Stockage persistant des images de produits
 
-- **Statut :** Proposé (22 novembre 2026) — **en attente de l'accord du responsable du projet** pour le choix et l'activation du fournisseur.
+- **Statut :** Proposé (22 novembre 2026) ; adaptateur Cloudinary **implémenté et testé sans réseau** (23 novembre 2026) — **activation en attente de l'accord du responsable** (compte gratuit et secrets dans Render).
 - **Exigences :** A-ADM-01 (« téléversement d'images avec validation du type et de la taille »), ENF-03 (sécurité), contrainte de coûts §6.3 (offres gratuites uniquement).
 
 ## Contexte
@@ -36,9 +36,32 @@ des offres gratuites changent : les revérifier avant l'activation.
    - nom de fichier généré par le serveur (`products/<id>/<uuid>.<ext>`), jamais celui du client ;
    - fichier supprimé du stockage si l'écriture en base échoue, et lors du retrait de l'image ;
    - sans fournisseur configuré : **503 `image_storage_not_configured`** (défaut en production).
-2. **Fournisseur (à activer après accord) :** Cloudinary, par son API HTTPS d'envoi signé (aucune
-   nouvelle dépendance Python), avec les secrets `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` et
-   `CLOUDINARY_API_SECRET` saisis **uniquement** dans le tableau de bord de Render.
+2. **Fournisseur (implémenté, à activer après accord) :** `CloudinaryStorage` (`api/app/services/image_storage.py`) :
+   - envoi signé `multipart/form-data` vers `https://api.cloudinary.com/v1_1/<compte>/image/upload`,
+     signature **SHA-256** des paramètres triés suivis du secret (format vérifié par l'exemple officiel
+     de la documentation de Cloudinary) ; aucune nouvelle dépendance Python ;
+   - garde-fous côté Cloudinary : `allowed_formats=jpg,png,webp`, `overwrite=false`, dossier dédié ;
+   - l'URL renvoyée n'est acceptée que si elle est en https et appartient au compte configuré ;
+   - suppression signée (`destroy`, `invalidate=true`) lors du retrait de l'image ou d'un échec en base ;
+     les URL externes ne sont jamais touchées ;
+   - erreurs du fournisseur → 503 `image_storage_unavailable`, sans secret dans le message ni les journaux ;
+   - configuration incomplète (`IMAGE_STORAGE_BACKEND=cloudinary` sans les trois identifiants) : **l'API
+     refuse de démarrer**.
+
+   **Variables à saisir dans Render (uniquement par le responsable) :**
+
+   | Variable | Valeur | Secret |
+   |---|---|---|
+   | `IMAGE_STORAGE_BACKEND` | `cloudinary` | Non |
+   | `CLOUDINARY_CLOUD_NAME` | nom du compte (tableau de bord Cloudinary) | Non |
+   | `CLOUDINARY_API_KEY` | clé d'API | Non (mais à ne pas publier) |
+   | `CLOUDINARY_API_SECRET` | secret d'API | **Oui** |
+   | `CLOUDINARY_FOLDER` | `quincaillerie-laurentienne` (défaut) | Non |
+
+   **Test réel à faire après activation :** administrateur avec MFA → `POST
+   /api/v1/admin/products/{id}/images/upload` (depuis `/docs` ou la page d'administration web) avec un
+   JPEG → 201 et une URL `https://res.cloudinary.com/...` ; l'image s'affiche sur la fiche du site ;
+   `DELETE .../images/{image_id}` → l'image disparaît aussi du tableau de bord Cloudinary.
 
 ## Conséquences
 
