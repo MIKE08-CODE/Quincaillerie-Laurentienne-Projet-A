@@ -9,7 +9,7 @@ import { AuthError } from "./AuthError";
 /** Connexion (A-AUTH-02), avec la deuxième étape MFA pour le personnel (A-AUTH-06). */
 export function LoginPage() {
   const { t } = useTranslation();
-  const { signIn } = useAuth();
+  const { signIn, startMfaSetup } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,10 +39,14 @@ export function LoginPage() {
         setMfaToken(result.mfa_token);
         return;
       }
+      if (result.mfa_setup_required) {
+        // Personnel sans MFA : le jeton limité ne donne accès qu'à la configuration de la MFA.
+        startMfaSetup(result.access_token);
+        navigate("/compte/mfa");
+        return;
+      }
       await signIn(result.access_token);
-      navigate("/compte", {
-        state: { mfaSetupRequired: result.mfa_setup_required === true },
-      });
+      navigate("/compte");
     });
   }
 

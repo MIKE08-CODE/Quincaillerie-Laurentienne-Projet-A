@@ -1,7 +1,7 @@
 {
   "brand": "Quincaillerie Laurentienne",
   "tagline": "Three stores in the Laurentians since 1978",
-  "nav": { "home": "Home", "catalog": "Catalogue", "stores": "Stores", "login": "Sign in", "account": "My account" },
+  "nav": { "home": "Home", "catalog": "Catalogue", "stores": "Stores", "login": "Sign in", "account": "My account", "admin": "Administration", "privacy": "Privacy" },
   "language": { "switch": "Français", "label": "Change language" },
   "search": {
     "label": "Search for a product",
@@ -74,6 +74,7 @@
       "acceptPrivacy": "I accept the privacy policy (required).",
       "marketing": "I want to receive promotions by email (optional).",
       "done": "If this address can be used, a verification email has just been sent. Open the link it contains (valid for 24 hours) to activate your account.",
+      "privacyLink": "Read the privacy policy (draft pending approval)",
       "haveAccount": "I already have an account"
     },
     "login": {
@@ -132,6 +133,94 @@
       "password_too_common": "This password is too common. Choose another one.",
       "password_too_simple": "The password is too repetitive. Choose another one.",
       "password_contains_personal_info": "The password must not contain your email, your name or the store name."
+    }
+  },
+  "admin": {
+    "title": "Catalogue administration",
+    "signIn": "Sign in with an administrator account.",
+    "count": "{{total}} products (active and inactive)",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit {{sku}}",
+    "editLabel": "Edit product {{sku}}",
+    "close": "Close",
+    "save": "Save",
+    "saved": "Product saved.",
+    "upload": "Upload image",
+    "uploaded": "Image added.",
+    "deleteImage": "Remove",
+    "deleted": "Image removed.",
+    "imageN": "Image {{n}}",
+    "imageHint": "JPEG, PNG or WebP; 5 MB and 6000 pixels per side at most.",
+    "columns": {
+      "sku": "SKU",
+      "name": "Product",
+      "price": "Price",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "fields": {
+      "nameFr": "Name (French)",
+      "nameEn": "Name (English)",
+      "price": "Price ($)",
+      "active": "Visible in the catalogue",
+      "image": "New image"
+    },
+    "errors": {
+      "generic": "The operation failed. Check the data and try again.",
+      "image_storage_not_configured": "Image upload is not enabled on this site yet.",
+      "image_storage_unavailable": "Image storage is temporarily unavailable. Try again.",
+      "image_too_large": "Image too large (5 MB maximum).",
+      "unsupported_image_type": "Format refused: JPEG, PNG or WebP only.",
+      "image_type_mismatch": "The file content does not match its type.",
+      "image_dimensions_too_large": "Image too big (6000 pixels per side maximum).",
+      "image_empty": "The file is empty.",
+      "image_invalid": "Unreadable image file.",
+      "mfa_required": "Enable multi-factor authentication first.",
+      "insufficient_role": "This page is reserved for administrators.",
+      "not_authenticated": "Session expired: sign in again.",
+      "invalid_token": "Session expired: sign in again."
+    }
+  },
+  "mfa": {
+    "title": "Multi-factor authentication",
+    "intro": "Your role requires a one-time code. Add the key below to an authenticator app (manual entry), then enter the 6-digit code it shows.",
+    "secret": "Key to enter",
+    "uri": "Setup address (otpauth)",
+    "enable": "Enable",
+    "signInFirst": "Sign in with your staff account first."
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "draft": "DRAFT PENDING APPROVAL — this text has not been approved and has no final legal value. School demonstration project: no real sales.",
+    "version": "Version 1.0 (draft of November 23, 2026).",
+    "controller": {
+      "title": "Person in charge of the protection of personal information",
+      "body": "Name and contact details: To be completed."
+    },
+    "data": {
+      "title": "Information collected",
+      "body": "Account: email, first name, last name, language, password (stored only as an Argon2id hash), role and store for staff, consents (version and date), email verification and last sign-in dates, failed sign-in counters. Staff: encrypted multi-factor authentication key. Your IP address is used, in memory only, to limit abusive attempts; it is not stored in the database."
+    },
+    "purposes": {
+      "title": "Purposes",
+      "body": "Create and secure your account, verify your email, allow password resets, protect the service against abuse and, only if you agree, send you promotions."
+    },
+    "hosting": {
+      "title": "Hosting and communication outside Québec",
+      "body": "Database: Neon (Amazon Web Services, United States, Virginia). API: Render (region: To be completed). Site: Vercel. Transactional email: Brevo, if enabled. Product images (no personal information): Cloudinary, if enabled. Privacy impact assessment: To be completed."
+    },
+    "retention": {
+      "title": "Retention period",
+      "body": "To be completed."
+    },
+    "rights": {
+      "title": "Your rights",
+      "body": "Access, correction, withdrawal of consent to promotions and account deletion: procedure and response time to be completed."
+    },
+    "contact": {
+      "title": "Contact us",
+      "body": "Contact address: To be completed."
     }
   },
   "footer": "© Quincaillerie Laurentienne — demonstration project, no real sales."

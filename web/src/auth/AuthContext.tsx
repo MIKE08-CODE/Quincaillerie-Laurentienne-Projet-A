@@ -20,6 +20,9 @@ interface AuthState {
   signIn: (token: string) => Promise<CurrentUser>;
   restore: () => Promise<CurrentUser | null>;
   signOut: () => Promise<void>;
+  /** Jeton limité du personnel sans MFA : sert seulement à configurer la MFA (A-AUTH-06). */
+  setupToken: string | null;
+  startMfaSetup: (limitedToken: string) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -27,11 +30,13 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [setupToken, setSetupToken] = useState<string | null>(null);
 
   const signIn = useCallback(async (accessToken: string) => {
     const me = await authApi.me(accessToken);
     setToken(accessToken);
     setUser(me);
+    setSetupToken(null);
     return me;
   }, []);
 
@@ -51,12 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setToken(null);
       setUser(null);
+      setSetupToken(null);
     }
   }, [token]);
 
+  const startMfaSetup = useCallback((limitedToken: string) => {
+    setToken(null);
+    setUser(null);
+    setSetupToken(limitedToken);
+  }, []);
+
   const value = useMemo(
-    () => ({ token, user, signIn, restore, signOut }),
-    [token, user, signIn, restore, signOut],
+    () => ({ token, user, signIn, restore, signOut, setupToken, startMfaSetup }),
+    [token, user, signIn, restore, signOut, setupToken, startMfaSetup],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
