@@ -1,5 +1,17 @@
 # Matrice de traçabilité et de conformité — L1 (v0.1.0)
 
+> **Mise à jour du 23 novembre 2026** (`main` = `24a3436`, PR ouvertes #54 et #55) — prévaut sur les lignes
+> ci-dessous lorsqu'elles diffèrent :
+> - #49, #50, #51, #52, #53 fusionnées ; tableau GitHub Projects complété (artéfact 8 : structure prête).
+> - A-ADM-01 : adaptateur Cloudinary (#54) et interface `/admin` (#55) **en PR** ; statut **PARTIEL** jusqu'au
+>   test réel du stockage ou à l'acceptation explicite de la limitation.
+> - A-AUTH-06 côté web : connexion du personnel sans MFA corrigée et configuration `/compte/mfa` (#55, en PR).
+> - Politique de confidentialité : ébauche « à valider » (#55, en PR).
+> - Production vérifiée le 23 novembre : CI de `main` verte ; `/health` 200 (réveil en 42,9 s) ; CORS : origine
+>   du site acceptée, origine étrangère refusée ; HTTP redirigé vers HTTPS (301).
+> - Issues #6, #8, #9 : critères vérifiés, fermeture à faire par le responsable (décision 2) ; #7 : démonstration
+>   mobile requise.
+
 Relevé du **22 novembre 2026**, sur `main` = `255e219`, avec les PR ouvertes #49, #50 et #51 (CI à vérifier
 avant fusion). Sources : cahier des charges §6.1, §6.2, §6.3, §8, §9.1 et A.11 ; historique Git et GitHub ;
 vérifications HTTP en lecture seule de la production.
