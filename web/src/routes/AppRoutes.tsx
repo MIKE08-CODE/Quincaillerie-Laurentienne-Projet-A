@@ -7,7 +7,10 @@ import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ProductPage } from "../pages/ProductPage";
 import { SearchPage } from "../pages/SearchPage";
+import { PrivacyPage } from "../pages/PrivacyPage";
 import { StoresPage } from "../pages/StoresPage";
+import { AdminProductsPage } from "../pages/admin/AdminProductsPage";
+import { MfaSetupPage } from "../pages/auth/MfaSetupPage";
 import { AccountPage } from "../pages/auth/AccountPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { ForgotPasswordPage, ResetPasswordPage } from "../pages/auth/PasswordPages";
@@ -30,6 +33,9 @@ export function AppRoutes() {
         <Route path="mot-de-passe-oublie" element={<ForgotPasswordPage />} />
         <Route path="reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
         <Route path="compte" element={<AccountPage />} />
+        <Route path="compte/mfa" element={<MfaSetupPage />} />
+        <Route path="admin" element={<AdminProductsPage />} />
+        <Route path="confidentialite" element={<PrivacyPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       </Routes>

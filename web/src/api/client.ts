@@ -91,3 +91,35 @@ export async function sendJson<T>(
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
+
+/** Envoi d'un fichier brut (téléversement d'image) avec son type ; jeton d'accès obligatoire. */
+export async function sendFile<T>(path: string, file: Blob, token: string, params: Record<string, QueryValue> = {}): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      method: "POST",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": file.type },
+      body: file,
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "network_error", "API injoignable");
+  }
+  if (!response.ok) throw await parseError(response);
+  return (await response.json()) as T;
+}
+
+/** GET JSON authentifié (routes d'administration). */
+export async function getJsonAuth<T>(path: string, token: string, params: Record<string, QueryValue> = {}): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "network_error", "API injoignable");
+  }
+  if (!response.ok) throw await parseError(response);
+  return (await response.json()) as T;
+}

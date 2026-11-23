@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext";
 import { Loading } from "../../components/StatusMessage";
@@ -10,10 +10,6 @@ export function AccountPage() {
   const { t } = useTranslation();
   const { user, restore, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const mfaSetupRequired = (
-    location.state as { mfaSetupRequired?: boolean } | null
-  )?.mfaSetupRequired;
   const [checking, setChecking] = useState(!user);
   const tried = useRef(false);
 
@@ -46,8 +42,10 @@ export function AccountPage() {
         <dt>{t("auth.account.role")}</dt>
         <dd>{t(`auth.roles.${user.role}`)}</dd>
       </dl>
-      {mfaSetupRequired && (
-        <p role="alert">{t("auth.account.mfaSetupRequired")}</p>
+      {user.role === "admin" && (
+        <p>
+          <Link to="/admin">{t("admin.title")}</Link>
+        </p>
       )}
       <button
         type="button"
