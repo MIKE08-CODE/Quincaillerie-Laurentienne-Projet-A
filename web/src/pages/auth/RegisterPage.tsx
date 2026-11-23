@@ -85,7 +85,12 @@ export function RegisterPage() {
             checked={accept}
             onChange={(e) => setAccept(e.target.checked)}
           />
-          <span>{t("auth.register.acceptPrivacy")}</span>
+          <span>
+            {t("auth.register.acceptPrivacy")}{" "}
+            <Link to="/confidentialite" target="_blank" rel="noopener">
+              {t("auth.register.privacyLink")}
+            </Link>
+          </span>
         </label>
         <label className="checkbox">
           <input

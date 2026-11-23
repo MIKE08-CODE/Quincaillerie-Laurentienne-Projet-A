@@ -131,3 +131,11 @@ h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; }
 .field input { padding: 0.5rem; border: 1px solid #9aa59c; border-radius: 6px; font: inherit; }
 .field__hint { margin: 0; font-size: 0.875rem; color: #4d5a50; }
 .checkbox { display: flex; gap: 0.5rem; align-items: flex-start; }
+
+/* Administration du catalogue et confidentialité */
+.admin__table { width: 100%; border-collapse: collapse; }
+.admin__table th, .admin__table td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #d6dbd3; vertical-align: top; }
+.admin__editor { display: grid; gap: 0.5rem; margin-top: 0.75rem; max-width: 28rem; }
+.admin__images { list-style: none; padding: 0; }
+.mfa__uri { word-break: break-all; }
+.privacy { max-width: 44rem; }
