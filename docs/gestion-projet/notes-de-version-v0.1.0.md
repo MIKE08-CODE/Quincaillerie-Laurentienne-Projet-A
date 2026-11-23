@@ -27,7 +27,8 @@ première requête peut prendre jusqu'à une minute.
   insensible aux accents.
 - **Administration (A-ADM-01)** : produits, catégories et marques (création, PATCH, désactivation),
   images par URL https ; **téléversement d'images validé** (type réel, taille, dimensions)
-  *(PR #49, stockage persistant à activer — ADR-009)*.
+  (PR #49) ; adaptateur de stockage Cloudinary signé, **inactif tant que le responsable ne l'active pas**
+  *(PR #54, ADR-009)*.
 - **Données** : migrations de toutes les entités Must (head `e2c9a4b7d3f1`) ; amorçage de démonstration
   (3 magasins, 157 produits, stocks) ; script des comptes de démonstration par rôle, sans mot de passe
   exposé (non exécuté en production).
@@ -38,7 +39,8 @@ première requête peut prendre jusqu'à une minute.
 - Accueil, catalogue avec catégories, tris et pagination, recherche, fiche produit et disponibilités,
   magasins, bascule FR/EN ; image de remplacement locale.
 - Inscription, vérification du courriel, connexion (avec MFA), mot de passe oublié et réinitialisation,
-  compte *(PR #50)*.
+  compte (PR #50) ; configuration de la MFA du personnel, administration du catalogue (`/admin` :
+  noms, prix, visibilité, images) et politique de confidentialité en **ébauche à valider** *(PR #55)*.
 - En-têtes de sécurité (CSP stricte, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) ; `/api` relayé
   vers Render (même origine).
 
@@ -58,6 +60,8 @@ première requête peut prendre jusqu'à une minute.
 - Dependabot : pip, npm (web, mobile), NuGet, GitHub Actions ; secret scanning et push protection.
 - Déploiement automatique de l'API (Render, migrations et amorçage au démarrage) et du web (Vercel) à
   chaque fusion sur `main`.
+- Distribution du bureau : `desktop-release` produit un exécutable Windows autonome (ZIP + SHA-256) et
+  crée la version GitHub en brouillon à la poussée de l'étiquette (PR #53).
 
 ## Tests (dernier relevé)
 
@@ -72,8 +76,8 @@ première requête peut prendre jusqu'à une minute.
 - **Courriels non envoyés en production** (`EMAIL_BACKEND=disabled`) : inscription et réinitialisation
   ne peuvent pas aboutir en ligne tant que Brevo n'est pas configuré.
 - **Téléversement d'images** : répond 503 tant qu'aucun stockage persistant n'est activé.
-- **Pas d'interface web d'administration** (API et `/docs` seulement).
-- Pas de page de politique de confidentialité (case obligatoire à l'inscription).
+- Interface d'administration **minimale** (produits) ; catégories et marques par l'API seulement.
+- Politique de confidentialité en **ébauche à valider** (non définitive).
 - Format d'erreur `ErrorOut` du contrat non encore appliqué (ADR-008).
 - Démonstration mobile sur appareil : à réaliser ; aucun APK ni lien de build Expo publié.
 - Alerte Dependabot n° 2 (`minimatch`, outillage Expo et Jest, gravité modérée) : risque toléré en

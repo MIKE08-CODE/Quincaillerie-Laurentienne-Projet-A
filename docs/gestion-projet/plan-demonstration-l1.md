@@ -26,7 +26,7 @@ direct, jamais réalisé par l'outillage).
 | 7–12 | **Web** | À désigner | Catégorie « Perceuses » → tri par prix → fiche `PERC-18V` (disponibilité par magasin, image de remplacement) → recherche « drill » puis « equerre » → bascule FR/EN | HTTP ✔ ; DÉMO à faire |
 | 12–14 | **Authentification web** | À désigner | Connexion du compte client → « Mon compte » → déconnexion ; mauvais mot de passe → message neutre. Si Brevo est configuré : inscription et lien de vérification reçu | TA ✔ (#50) ; DÉMO à faire ; courriel **seulement si la preuve P6 est obtenue** |
 | 14–16 | **Mobile et bureau** | À désigner | Mobile : liste, catégorie ; bureau : liste et recherche ; même API en ligne | TA d'intégration ✔ ; DÉMO à faire |
-| 16–18 | API et administration | À désigner | `/docs` ; `/admin/products` sans jeton → 401 ; client → 403 ; admin avec MFA → PATCH d'un prix, visible sur le site | TA ✔ ; DÉMO à faire |
+| 16–18 | Administration | À désigner | Connexion du compte administrateur (code MFA) → `/admin` → modifier le prix de `PERC-18V`, visible sur la fiche du site → téléverser une image (si Cloudinary est activé ; sinon message « pas encore activé ») ; `/docs` : `/api/v1/admin/products` sans jeton → 401, client → 403 | TA ✔ (#55) ; DÉMO à faire |
 | 18–19 | DevOps | À désigner | Ruleset de `main`, PR avec CI verte, CodeQL (4 langages), Dependabot, Gitleaks, déploiement automatique | GitHub ✔ |
 | 19–20 | Bilan | À désigner | Huit artéfacts, limites assumées, plan L2 | Matrice de traçabilité |
 
@@ -69,8 +69,14 @@ les disponibilités sont démontrées sur le web et le bureau.
 | W3 | Fiche `PERC-18V` : prix, caractéristiques, disponibilité par magasin, aucune quantité | ☐ | |
 | W4 | Image de remplacement visible | ☐ | |
 | W5 | Bascule FR/EN | ☐ | |
-| W6 | Connexion, compte, déconnexion (après fusion de #50 et création des comptes) | ☐ | |
-| B1 | Bureau : liste depuis l'API publique, recherche | ☐ | |
+| W6 | Connexion, compte, déconnexion (comptes de démonstration créés) | ☐ | |
+| W7 | Personnel sans MFA → `/compte/mfa` → code → session ouverte (#55) | ☐ | |
+| W8 | `/admin` : modification d'un prix visible sur le site (#55) | ☐ | |
+| W9 | `/confidentialite` accessible depuis l'inscription, marquée « à valider » (#55) | ☐ | |
+| B1 | Bureau : l'exécutable du paquet `desktop-release` démarre sans installation de .NET | ☐ | |
+| B2 | Bureau : la liste des produits vient de l'API publique (≥ 150 produits) | ☐ | |
+| B3 | Bureau : la recherche filtre la liste | ☐ | |
+| B4 | Bureau : API en veille → premier chargement abouti (délai 60 s) ou message clair et « Réessayer » | ☐ | |
 
 ## 4. Questions probables
 

@@ -13,14 +13,14 @@ probabilité × impact. **Responsables : à confirmer par l'équipe** (MIKE08-CO
 | R10 | Client mobile jamais exécuté sur un appareil ou un émulateur | 2 | 3 | 6 | Procédure et grille d'acceptation (`plan-demonstration-l1.md` §3) ; délai de 60 s (PR #51) | Ouvert | À confirmer |
 | R12 | Contradiction d'échéancier du cahier (L1 en semaine 2 ou 3) | 2 | 3 | 6 | À arbitrer par le responsable (point ouvert O16) | Ouvert | Responsable du projet |
 | R4 | Un seul développeur fusionne, sans relecture (0 approbation, §6.1 en exige 1) | 2 | 3 | 6 | CI obligatoire, fils résolus ; écart consigné | Accepté (décision du responsable) | MIKE08-CODE |
-| R15 | **Images** : téléversement sans stockage persistant (503) ; aucune interface web d'administration | 3 | 2 | 6 | Validation implémentée (PR #49) ; ADR-009 propose Cloudinary gratuit | Ouvert — décision requise | MIKE08-CODE |
+| R15 | **Images** : stockage persistant non activé (503 en production) | 2 | 2 | 4 | Validation (#49), adaptateur Cloudinary testé sans réseau (#54), interface `/admin` (#55) ; activation : décision 4 de `decisions-et-validations-l1.md` | Ouvert — décision requise | MIKE08-CODE |
 | R16 | PR Dependabot de versions **majeures** (#43 `@eslint/js` 10, #44 TypeScript 7 mobile, #45 jest-dom 7, #46 i18next 27, #47 react-i18next 18, #48 Vite 8) ; #43, #47 et #48 échouent en CI | 2 | 2 | 4 | **Ne pas fusionner avant la remise L1** ; traiter une par une au L2 avec tests | Ouvert | À confirmer |
 | R14 | **Alerte Dependabot n° 2** — `minimatch` GHSA-g3hv-75wg-m249 (déni de service par motifs glob, modérée), voir détail ci-dessous | 1 | 1 | 1 | Exception documentée dans `mobile/scripts/audit-check.mjs` ; **réévaluation au plus tard le 2026-12-21** | Toléré (fermeture de l'alerte : décision du responsable) | MIKE08-CODE |
 | R6 | PR Dependabot #24 bloquée (Ruff UP042, issue #26) ; #25 (`argon2-cffi` 25) en attente | 2 | 2 | 4 | Issue #26 ; vérifier la compatibilité Argon2 avant fusion | Ouvert | À confirmer |
 | R5 | Écart entre le contrat d'API et le code (format d'erreur) | 2 | 2 | 4 | ADR-008 ; écart consigné au §18 du contrat | Ouvert | À confirmer |
 | R9 | Mise en veille de l'API gratuite pendant la démonstration | 2 | 2 | 4 | Réveil 15 min avant ; clients à 60 s (PR #51) ; plan de repli local | Atténué | Présentateur |
 | R13 | Charge de travail : trois clients, l'API et le déploiement | 3 | 2 | 6 | Périmètre minimal L1 pour le mobile et le bureau ; priorisation par issues | Ouvert | À confirmer |
-| R17 | Pas de page de politique de confidentialité alors que l'inscription exige son acceptation (Loi 25) | 2 | 2 | 4 | Rédiger la politique (contenu : décision humaine), puis la lier au formulaire | Ouvert | À confirmer |
+| R17 | Politique de confidentialité en ébauche non validée (Loi 25) | 2 | 2 | 4 | Ébauche fidèle aux traitements réels, liée à l'inscription (#55) ; champs « À compléter » | Ouvert — validation requise | Responsable du projet |
 | R18 | Distribution exigée par §6.3 absente (bureau sur GitHub Releases, APK ou lien Expo) | 2 | 2 | 4 | À produire avec la version `v0.1.0` (autorisation requise) | Ouvert | MIKE08-CODE |
 | R11 | Deux versions majeures de React (web 18, mobile 19) | 1 | 1 | 1 | ADR-007 ; aucun code partagé | Accepté sous réserve d'approbation | À confirmer |
 

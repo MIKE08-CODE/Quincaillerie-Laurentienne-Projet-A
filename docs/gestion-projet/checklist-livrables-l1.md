@@ -15,8 +15,10 @@ exigence, avec les preuves et le niveau de preuve (test automatisé, HTTP, démo
 | 7 | DevOps | PARTIEL | Décider de l'approbation exigée (§6.1) et des contrôles obligatoires ; alerte n° 2 | Responsable |
 | 8 | Gestion de projet | PARTIEL | [Tableau](https://github.com/users/MIKE08-CODE/projects/1) prêt ; sprints, responsables, heures et comptes rendus réels | Équipe |
 
-**La L1 n'est pas encore livrable** : artéfact 8 sans données, démonstration mobile non faite,
-courriels inactifs en production, étiquette `v0.1.0` absente.
+**La L1 n'est pas encore livrable** : données de l'équipe absentes (artéfact 8), démonstrations non faites,
+courriels et stockage des images inactifs en production, validations et étiquette `v0.1.0` absentes.
+Liste ordonnée des décisions et procédures : [`decisions-et-validations-l1.md`](decisions-et-validations-l1.md) ;
+données à fournir : [`donnees-equipe-a-completer.md`](donnees-equipe-a-completer.md).
 
 ## Ordre recommandé pour finaliser
 

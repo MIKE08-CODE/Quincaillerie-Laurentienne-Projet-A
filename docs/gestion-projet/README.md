@@ -2,6 +2,8 @@
 
 | Document | Contenu | État |
 |---|---|---|
+| [Décisions et validations](decisions-et-validations-l1.md) | Les 12 décisions humaines, dans l'ordre, avec procédure | **À traiter par le responsable** |
+| [Données de l'équipe à compléter](donnees-equipe-a-completer.md) | Modèle unique : équipe, sprints, responsables, heures, réunions, démonstrations | **À remplir** |
 | [Matrice de traçabilité et de conformité](matrice-tracabilite-l1.md) | Exigence → issue → PR → tests → preuve → statut ; preuves à fournir | **Référence de la remise** |
 | [Checklist des huit livrables L1](checklist-livrables-l1.md) | Synthèse des artéfacts et blocages | Tenue à jour |
 | [Preuves de tests et de CI](preuves-tests-ci.md) | Exécutions GitHub Actions, résultats locaux, production | Tenue à jour |
