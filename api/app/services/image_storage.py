@@ -76,14 +76,15 @@ class MemoryStorage:
             self.objects.pop(url.removeprefix(self.BASE_URL), None)
 
 
-def cloudinary_signature(params: dict[str, str], api_secret: str, algorithm: str = "sha256") -> str:
-    """`nom=valeur` triés par nom, joints par `&`, suivis du secret ; empreinte hexadécimale.
-
-    SHA-256 en production ; SHA-1 reste calculable pour vérifier la mise en forme avec l'exemple de la
-    documentation de Cloudinary (tests).
-    """
+def _string_to_sign(params: dict[str, str], api_secret: str) -> str:
+    """`nom=valeur` triés par nom, joints par `&`, suivis du secret (documentation de Cloudinary)."""
     payload = "&".join(f"{k}={v}" for k, v in sorted(params.items()) if k not in _UNSIGNED_FIELDS and v != "")
-    return hashlib.new(algorithm, (payload + api_secret).encode("utf-8")).hexdigest()
+    return payload + api_secret
+
+
+def cloudinary_signature(params: dict[str, str], api_secret: str) -> str:
+    """Signature SHA-256 (hexadécimale) acceptée par Cloudinary ; SHA-1 n'est jamais utilisé."""
+    return hashlib.sha256(_string_to_sign(params, api_secret).encode("utf-8")).hexdigest()
 
 
 def _multipart(fields: dict[str, str], file_bytes: bytes, content_type: str) -> tuple[bytes, str]:

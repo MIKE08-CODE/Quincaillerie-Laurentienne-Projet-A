@@ -3,6 +3,7 @@
 Aucun appel réseau : `urllib.request.urlopen` est remplacé. Les identifiants sont générés à l'exécution.
 """
 
+import hashlib
 import io
 import json
 import secrets
@@ -60,24 +61,26 @@ def calls(monkeypatch):
     return recorded
 
 
-def test_signature_matches_the_cloudinary_documentation_example():
-    # Exemple officiel (SHA-1) : timestamp=1315060510, secret « abcd ».
-    assert cloudinary_signature({"timestamp": "1315060510"}, "abcd", "sha1") == (
-        "a21ad0f63beb4de2e5575204b79ab90bffb02c10"
-    )
+def test_string_to_sign_matches_the_cloudinary_documentation_example():
+    # Exemple officiel : la chaîne signée doit être identique ; l'empreinte SHA-1 publiée par Cloudinary
+    # est recalculée ici seulement pour le prouver (l'API, elle, signe toujours en SHA-256).
+    assert image_storage._string_to_sign({"timestamp": "1315060510"}, "abcd") == "timestamp=1315060510abcd"
     params = {
         "eager": "w_400,h_300,c_pad|w_260,h_200,c_crop",
         "public_id": "sample_image",
         "timestamp": "1315060510",
     }
-    assert cloudinary_signature(params, "abcd", "sha1") == "bfd09f95f331f558cbd1320e67aa8d488770583e"
+    expected = "eager=w_400,h_300,c_pad|w_260,h_200,c_crop&public_id=sample_image&timestamp=1315060510abcd"
+    assert image_storage._string_to_sign(params, "abcd") == expected
+    published = "bfd09f95f331f558cbd1320e67aa8d488770583e"
+    assert hashlib.sha1(expected.encode(), usedforsecurity=False).hexdigest() == published  # vecteur de test
 
 
 def test_signature_excludes_file_api_key_cloud_name_and_resource_type():
     base = {"public_id": "x", "timestamp": "1"}
     noisy = {**base, "file": "...", "api_key": "k", "cloud_name": "c", "resource_type": "image"}
     assert cloudinary_signature(noisy, "s") == cloudinary_signature(base, "s")
-    assert len(cloudinary_signature(base, "s")) == 64  # SHA-256 en production
+    assert cloudinary_signature(base, "s") == hashlib.sha256(b"public_id=x&timestamp=1s").hexdigest()
 
 
 def test_upload_sends_a_signed_multipart_request_and_returns_the_secure_url(storage, creds, calls):
