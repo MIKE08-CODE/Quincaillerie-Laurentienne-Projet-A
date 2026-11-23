@@ -155,7 +155,10 @@ _BINARY = {"schema": {"type": "string", "format": "binary"}}
         },
         503: {
             "model": ErrorResponse,
-            "description": "Stockage non configuré (`image_storage_not_configured`).",
+            "description": (
+                "Stockage non configuré (`image_storage_not_configured`) "
+                "ou indisponible (`image_storage_unavailable`)."
+            ),
         },
     },
     openapi_extra={

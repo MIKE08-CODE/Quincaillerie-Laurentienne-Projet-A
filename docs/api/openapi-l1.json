@@ -1782,7 +1782,7 @@
             }
           },
           "503": {
-            "description": "Stockage non configuré (`image_storage_not_configured`).",
+            "description": "Stockage non configuré (`image_storage_not_configured`) ou indisponible (`image_storage_unavailable`).",
             "content": {
               "application/json": {
                 "schema": {
