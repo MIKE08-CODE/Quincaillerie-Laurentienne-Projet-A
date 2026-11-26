@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     """Rôles stockés (A-AUTH-05). Le « visiteur » n'est pas stocké : c'est l'absence de jeton."""
 
     CLIENT = "client"
