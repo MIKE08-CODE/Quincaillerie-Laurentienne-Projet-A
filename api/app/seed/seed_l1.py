@@ -140,8 +140,8 @@ def run(db: Session) -> SeedReport:
     store_ids = _seed_stores(db, report)
     category_ids = _seed_categories(db, report)
     brand_ids = _seed_brands(db, report)
-    product_ids = dict(db.execute(select(Product.sku, Product.id)).tuples().all())
-    stocked = set(db.execute(select(Inventory.product_id, Inventory.store_id)).tuples().all())
+    product_ids = {sku: pid for sku, pid in db.execute(select(Product.sku, Product.id))}
+    stocked = {(pid, sid) for pid, sid in db.execute(select(Inventory.product_id, Inventory.store_id))}
 
     for data in _products():
         product_id = product_ids.get(data["sku"])
