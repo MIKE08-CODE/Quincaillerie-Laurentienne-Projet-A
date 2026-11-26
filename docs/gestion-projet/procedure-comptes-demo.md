@@ -1,5 +1,11 @@
 # Procédure — comptes de démonstration par rôle (cahier §6.3)
 
+> **État au 26 novembre 2026** : les quatre comptes `demo-…@example.com` ont été créés en production
+> par le responsable (autorisation écrite), puis vérifiés en lecture seule ; le mot de passe de
+> l'administrateur a été réinitialisé seul, avec le même traitement que la réinitialisation par
+> courriel (Argon2id, sessions fermées, rôle et MFA inchangés). Aucun mot de passe n'a été écrit
+> dans Git, un journal ou une conversation.
+
 Script : `python -m app.seed.demo_accounts` (`api/app/seed/demo_accounts.py`, PR #38).
 **Il n'est jamais lancé automatiquement** : ni `render.yaml`, ni un workflow, ni un Dockerfile ne l'appellent.
 

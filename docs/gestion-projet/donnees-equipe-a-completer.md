@@ -55,7 +55,7 @@ Chaque réunion donne ensuite un fichier `docs/meetings/AAAA-MM-JJ-type.md` (gab
 
 ## 6. Démonstrations réelles (après répétition)
 
-| Grille | Appareil, émulateur ou poste | Date | Résultat (M1–M6, W1–W6, B1–B4) | Capture ou vidéo |
+| Grille | Appareil, émulateur ou poste | Date | Résultat (M1–M6, W1–W9, B1–B4) | Capture ou vidéo |
 |---|---|---|---|---|
 | Mobile | … | … | … | … |
 | Web | … | … | … | … |

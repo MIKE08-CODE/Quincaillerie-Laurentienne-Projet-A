@@ -27,11 +27,11 @@ première requête peut prendre jusqu'à une minute.
   insensible aux accents.
 - **Administration (A-ADM-01)** : produits, catégories et marques (création, PATCH, désactivation),
   images par URL https ; **téléversement d'images validé** (type réel, taille, dimensions)
-  (PR #49) ; adaptateur de stockage Cloudinary signé, **inactif tant que le responsable ne l'active pas**
-  *(PR #54, ADR-009)*.
+  (PR #49) ; stockage Cloudinary signé, **activé en production** ; l'image téléversée devient l'image
+  principale de la carte et de la fiche *(PR #54, #64, ADR-009)*.
 - **Données** : migrations de toutes les entités Must (head `e2c9a4b7d3f1`) ; amorçage de démonstration
-  (3 magasins, 157 produits, stocks) ; script des comptes de démonstration par rôle, sans mot de passe
-  exposé (non exécuté en production).
+  (3 magasins, 157 produits, stocks) ; comptes de démonstration par rôle (client, commis, gérant,
+  administrateur) créés en production par le responsable, sans mot de passe exposé.
 - Courriels transactionnels par l'API HTTPS de Brevo (le SMTP sortant est bloqué sur Render) ; un échec
   d'envoi n'interrompt plus le parcours.
 
@@ -76,9 +76,8 @@ première requête peut prendre jusqu'à une minute.
 | Bureau | 19 sur `main` ; 20 avec #51 | Test d'intégration contre l'API publique : réussi |
 
 ## Limitations connues
-- **Courriels non envoyés en production** (`EMAIL_BACKEND=disabled`) : inscription et réinitialisation
-  ne peuvent pas aboutir en ligne tant que Brevo n'est pas configuré.
-- **Téléversement d'images** : répond 503 tant qu'aucun stockage persistant n'est activé.
+- Courriels Brevo activés : la réinitialisation du mot de passe a été testée en réel ; la vérification
+  du courriel à l'inscription reste à confirmer.
 - Interface d'administration **minimale** (produits) ; catégories et marques par l'API seulement.
 - Politique de confidentialité en **ébauche à valider** (non définitive).
 - Format d'erreur `ErrorOut` du contrat non encore appliqué (ADR-008).
