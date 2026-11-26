@@ -78,4 +78,17 @@ describe("Catalogue (A-CAT-01)", () => {
     renderAt("/produits");
     expect(await screen.findByRole("alert")).toHaveTextContent("Trop de requêtes");
   });
+
+  it("affiche sur la carte l'image téléversée renvoyée comme image principale (issue #10)", async () => {
+    mockApi((url) => {
+      if (url.pathname === "/api/v1/categories") return { body: categories };
+      if (url.pathname === "/api/v1/products") return { body: page([product({ main_image_url: "https://res.cloudinary.com/demo-cloud/image/upload/v1/quincaillerie-laurentienne/products/p1/abc.jpg" })], 1) };
+      return undefined;
+    });
+    const { container } = renderAt("/produits");
+    await screen.findByText("Perceuse-visseuse sans fil 18 V");
+    const img = container.querySelector(".card img");
+    expect(img).toHaveAttribute("src", "https://res.cloudinary.com/demo-cloud/image/upload/v1/quincaillerie-laurentienne/products/p1/abc.jpg");
+    expect(img).not.toHaveAttribute("data-placeholder");
+  });
 });

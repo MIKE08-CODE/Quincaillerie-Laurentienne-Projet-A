@@ -147,10 +147,11 @@
     "save": "Enregistrer",
     "saved": "Produit enregistré.",
     "upload": "Téléverser l'image",
-    "uploaded": "Image ajoutée.",
+    "uploaded": "Image ajoutée : c'est maintenant l'image principale du produit.",
     "deleteImage": "Retirer",
     "deleted": "Image retirée.",
     "imageN": "Image {{n}}",
+    "imageMain": "Image principale (affichée dans le catalogue)",
     "imageHint": "JPEG, PNG ou WebP ; 5 Mo et 6000 pixels par côté au maximum.",
     "columns": {
       "sku": "SKU",
@@ -167,7 +168,7 @@
       "image": "Nouvelle image"
     },
     "errors": {
-      "generic": "L'opération a échoué. Vérifiez les données et réessayez.",
+      "generic": "L'opération a échoué (code : {{code}}). Vérifiez les données et réessayez.",
       "image_storage_not_configured": "Le téléversement d'images n'est pas encore activé sur ce site.",
       "image_storage_unavailable": "Le stockage des images est momentanément indisponible. Réessayez.",
       "image_too_large": "Image trop lourde (5 Mo au maximum).",
@@ -179,7 +180,8 @@
       "mfa_required": "Activez d'abord l'authentification multifacteur.",
       "insufficient_role": "Cette page est réservée aux administrateurs.",
       "not_authenticated": "Session expirée : reconnectez-vous.",
-      "invalid_token": "Session expirée : reconnectez-vous."
+      "invalid_token": "Session expirée : reconnectez-vous.",
+      "network_error": "Serveur injoignable : vérifiez la connexion et réessayez (le premier appel peut prendre jusqu'à une minute)."
     }
   },
   "mfa": {

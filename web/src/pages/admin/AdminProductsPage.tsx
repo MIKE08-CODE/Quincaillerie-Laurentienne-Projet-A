@@ -22,15 +22,18 @@ const ADMIN_ERRORS = new Set([
   "insufficient_role",
   "not_authenticated",
   "invalid_token",
+  "network_error",
 ]);
 
 function AdminError({ error }: { error: unknown }) {
   const { t } = useTranslation();
   if (!error) return null;
-  const code = error instanceof ApiError ? error.code : "unknown";
+  const raw = error instanceof ApiError ? error.code : "unknown";
+  // Un relais (Vercel) peut refuser un fichier trop lourd avant l'API, sans corps JSON : http_413.
+  const code = raw === "http_413" ? "image_too_large" : raw;
   return (
     <p className="status status--error" role="alert">
-      {t(ADMIN_ERRORS.has(code) ? `admin.errors.${code}` : "admin.errors.generic")}
+      {ADMIN_ERRORS.has(code) ? t(`admin.errors.${code}`) : t("admin.errors.generic", { code })}
     </p>
   );
 }
@@ -123,7 +126,7 @@ function ProductEditor({ product, token, onSaved }: { product: AdminProduct; tok
           {product.images.map((image) => (
             <li key={image.id}>
               <a href={image.url} target="_blank" rel="noreferrer">
-                {t("admin.imageN", { n: image.position + 1 })}
+                {image.position === 0 ? t("admin.imageMain") : t("admin.imageN", { n: image.position + 1 })}
               </a>{" "}
               <button
                 type="button"

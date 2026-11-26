@@ -164,8 +164,49 @@ def test_admin_uploads_an_image_and_it_is_attached_to_the_product(client, admin_
 def test_server_generates_the_file_name(client, admin_headers, product, storage):
     first = _upload(client, product.id, jpeg(), "image/jpeg", admin_headers).json()
     second = _upload(client, product.id, jpeg(), "image/jpeg", admin_headers).json()
-    assert first["url"] != second["url"] and second["position"] == 1
+    assert first["url"] != second["url"] and second["position"] == 0  # la plus récente est la principale
     assert all(".." not in key and "/" in key for key in storage.objects)
+
+
+PLACEHOLDER = "https://images.quincaillerie-laurentienne.example/products/perc-18v-up.jpg"
+
+
+def test_uploaded_image_is_shown_by_the_public_catalog(client, admin_headers, product, storage):
+    """Parcours complet (issue #10) : téléversement → enregistrement du formulaire → catalogue public.
+
+    En production, chaque produit amorcé a déjà une image de remplacement en position 0 (domaine
+    `.example`, jamais résolu). L'image téléversée doit devenir l'image principale de la carte et de
+    la fiche, sans supprimer l'image existante.
+    """
+    seeded = client.post(f"{API}/{product.id}/images", json={"url": PLACEHOLDER}, headers=admin_headers)
+    assert seeded.status_code == 201 and seeded.json()["position"] == 0
+
+    uploaded = _upload(client, product.id, jpeg(), "image/jpeg", admin_headers, alt_fr="Perceuse").json()
+    assert uploaded["position"] == 0  # l'image téléversée devient la principale
+
+    # « Enregistrer » dans /admin (nom, prix, activation) ne touche pas aux images.
+    saved = client.patch(
+        f"{API}/{product.id}",
+        json={"name_fr": "Perceuse 18 V", "name_en": "Drill 18 V", "price_cents": 12999, "is_active": True},
+        headers=admin_headers,
+    )
+    assert saved.status_code == 200, saved.text
+
+    listing = client.get("/api/v1/products", params={"size": 50}).json()["items"]
+    card = next(item for item in listing if item["id"] == str(product.id))
+    assert card["main_image_url"] == uploaded["url"]
+
+    detail = client.get(f"/api/v1/products/{product.id}").json()
+    assert [(i["url"], i["position"]) for i in detail["images"]] == [(uploaded["url"], 0), (PLACEHOLDER, 1)]
+
+
+def test_each_new_upload_becomes_the_main_image_and_keeps_the_others(client, admin_headers, product, storage):
+    first = _upload(client, product.id, png(), "image/png", admin_headers).json()
+    second = _upload(client, product.id, png(), "image/png", admin_headers).json()
+    third = _upload(client, product.id, png(), "image/png", admin_headers).json()
+    detail = client.get(f"/api/v1/products/{product.id}").json()
+    assert [i["url"] for i in detail["images"]] == [third["url"], second["url"], first["url"]]
+    assert [i["position"] for i in detail["images"]] == [0, 1, 2]
 
 
 @pytest.mark.parametrize(
