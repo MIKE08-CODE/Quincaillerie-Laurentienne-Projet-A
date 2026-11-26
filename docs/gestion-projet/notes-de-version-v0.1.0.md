@@ -58,6 +58,9 @@ première requête peut prendre jusqu'à une minute.
   production), `web-ci`, `mobile-ci`, `desktop-ci`, `security` (CodeQL Python, workflows, JS/TS, C# ;
   Gitleaks sur tout l'historique).
 - Dependabot : pip, npm (web, mobile), NuGet, GitHub Actions ; secret scanning et push protection.
+- Dépendances à jour au 26 novembre 2026 : `i18next` 27 (correctif de sécurité GHSA-6jcc-5g8w-32mx),
+  `react-i18next` 18, Vite 8, ESLint 10, SQLAlchemy 2.1, Alembic 1.20, Uvicorn 0.54, `argon2-cffi` 25,
+  TypeScript 7 (mobile) ; Node.js **22.13 ou plus** requis pour le web (PR #24, #25, #44, #45, #47, #57 à #61).
 - Déploiement automatique de l'API (Render, migrations et amorçage au démarrage) et du web (Vercel) à
   chaque fusion sur `main`.
 - Distribution du bureau : `desktop-release` produit un exécutable Windows autonome (ZIP + SHA-256) et

@@ -3,9 +3,10 @@
 **Aucune de ces décisions n'est acquise.** Chacune exige une action explicite du responsable du projet ;
 la procédure est donnée pour qu'elle soit courte et vérifiable. Ordre recommandé : de haut en bas.
 
-## 1. Fusionner les PR prêtes (#54, #55, puis la PR documentaire de clôture)
+## 1. Fusionner les PR prêtes — **fait**
 
-Vérifier dans chaque PR : contrôles verts, fichiers attendus. Autoriser la fusion par squash.
+#54, #55 et #56 fusionnées le 23 novembre 2026. Le 26 novembre 2026, sur autorisation globale : PR
+Dependabot #57, #44, #24, #47, #45, #25 et PR correctives #58 à #61 fusionnées (détail en section 10).
 
 ## 2. Fermer les issues dont les critères sont satisfaits (#6, #8, #9)
 
@@ -82,10 +83,24 @@ Revérifié le 23 novembre 2026 : `@expo/fingerprint` 0.21.10 (dernière) exige 
 Décider : conserver l'alerte ouverte avec l'exception documentée (risque R14, réévaluation au plus tard le
 2026-12-21), ou la fermer dans GitHub avec la raison « risque toléré » (action du responsable).
 
-## 10. PR Dependabot de versions majeures (#43 à #48)
+## 10. PR Dependabot — **traitées le 26 novembre 2026**
 
-Ne pas fusionner avant la remise (#43, #47, #48 échouent en CI). #42 (React 19.3.1, mobile, correctif) et
-#24/#25 : à traiter au L2 avec tests.
+| PR | Mise à jour | Résultat |
+|---|---|---|
+| #57 | `i18next` 27.2.7 (web) | Fusionnée ; corrige les alertes Dependabot n° 3 et 4 (GHSA-6jcc-5g8w-32mx) |
+| #46 | `i18next` 27.2.1 | Fermée par Dependabot (remplacée par #57) |
+| #47 | `react-i18next` 18 | Fusionnée (React 18 pris en charge ; l'application n'utilise que `useTranslation`) |
+| #45 | `@testing-library/jest-dom` 8 | Fusionnée |
+| #44 | TypeScript 7 (mobile) | Fusionnée (types, tests et bundle Android verts) |
+| #24 | 9 paquets Python (SQLAlchemy 2.1, Alembic 1.20, Uvicorn 0.54, Ruff 0.17…) | Fusionnée après #58 (`StrEnum`, règle UP042) ; dépréciations retirées par #59 |
+| #25 | `argon2-cffi` 25.1.0 | Fusionnée (hachages existants vérifiables, mêmes paramètres) |
+| #43 | `@eslint/js` 10 | Remplacée par #60 (ESLint 10 et `eslint-plugin-react-hooks` 7, `useApi` revu) ; fermée par Dependabot |
+| #48 | Vite 8 | Remplacée par #61 (Vite 8 et `@vitejs/plugin-react` 6) ; fermée par Dependabot |
+| #42 | React 19.3.1 (mobile) | **Non fusionnée** : Expo SDK 58 et React Native 0.88.1 imposent React 19.3.0 ; laissée à Dependabot |
+
+Chaque fusion : branche à jour avec `main`, tous les contrôles verts, liste exacte des fichiers vérifiée, squash.
+Après #24 : déploiement Render réussi et recherche de production inchangée (perceuse 13, drill 14, équerre 5) ;
+après #61 : le site de production sert le bundle construit localement avec Vite 8.
 
 ## 11. Validations documentaires
 

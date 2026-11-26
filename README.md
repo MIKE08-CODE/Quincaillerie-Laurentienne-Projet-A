@@ -32,7 +32,7 @@ appliquées par l'API. Détails : [`docs/architecture/`](docs/architecture/) (C4
 |---|---|
 | API | FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, PyJWT, Argon2id, slowapi |
 | Base de données | PostgreSQL 16 + pgvector ; recherche plein texte FR/EN avec `unaccent` |
-| Web | React 18, Vite 6, TypeScript, React Router 7, i18next ; Vitest |
+| Web | React 18, Vite 8, TypeScript, React Router 7, i18next ; Vitest (Node.js 22.13 ou plus) |
 | Mobile | React Native 0.88, Expo SDK 58 ; Jest (`jest-expo`) |
 | Bureau | .NET 8, WPF, MVVM (CommunityToolkit.Mvvm) ; xUnit |
 | CI/CD | GitHub Actions (`api-ci`, `web-ci`, `mobile-ci`, `desktop-ci`, `security`), Dependabot, CodeQL, Gitleaks |
