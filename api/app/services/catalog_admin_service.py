@@ -127,10 +127,22 @@ def deactivate_product(db: Session, product_id: uuid.UUID) -> None:
     _commit(db)
 
 
-def add_image(db: Session, product_id: uuid.UUID, data: ImageCreate) -> ProductImage:
+def add_image(
+    db: Session, product_id: uuid.UUID, data: ImageCreate, *, as_main: bool = False
+) -> ProductImage:
+    """Ajoute une image. `as_main` : elle prend la position 0 (image principale de la carte et de la
+    fiche) et les images existantes reculent d'un rang ; aucune n'est supprimée."""
     product = get_product(db, product_id)
     position = data.position
-    if position is None:
+    if as_main:
+        # Verrou du produit : deux téléversements simultanés ne se disputent pas les positions.
+        db.execute(select(Product.id).where(Product.id == product.id).with_for_update())
+        # Du dernier rang au premier : la contrainte unique (produit, position) n'est jamais violée.
+        for existing in sorted(product.images, key=lambda image: image.position, reverse=True):
+            existing.position += 1
+            db.flush()
+        position = 0
+    elif position is None:
         last = db.scalar(select(func.max(ProductImage.position)).where(ProductImage.product_id == product.id))
         position = 0 if last is None else last + 1
     image = ProductImage(
@@ -168,7 +180,8 @@ def upload_image(
     key = f"products/{product_id}/{uuid.uuid4().hex}.{info.extension}"
     url = storage.save(key, data, info.content_type)
     try:
-        return add_image(db, product_id, ImageCreate(url=url, alt_fr=alt_fr, alt_en=alt_en))
+        # L'image téléversée devient l'image principale : c'est elle que le catalogue public affiche.
+        return add_image(db, product_id, ImageCreate(url=url, alt_fr=alt_fr, alt_en=alt_en), as_main=True)
     except Exception:
         storage.delete(url)
         raise

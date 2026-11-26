@@ -147,10 +147,11 @@
     "save": "Save",
     "saved": "Product saved.",
     "upload": "Upload image",
-    "uploaded": "Image added.",
+    "uploaded": "Image added: it is now the product's main image.",
     "deleteImage": "Remove",
     "deleted": "Image removed.",
     "imageN": "Image {{n}}",
+    "imageMain": "Main image (shown in the catalogue)",
     "imageHint": "JPEG, PNG or WebP; 5 MB and 6000 pixels per side at most.",
     "columns": {
       "sku": "SKU",
@@ -167,7 +168,7 @@
       "image": "New image"
     },
     "errors": {
-      "generic": "The operation failed. Check the data and try again.",
+      "generic": "The operation failed (code: {{code}}). Check the data and try again.",
       "image_storage_not_configured": "Image upload is not enabled on this site yet.",
       "image_storage_unavailable": "Image storage is temporarily unavailable. Try again.",
       "image_too_large": "Image too large (5 MB maximum).",
@@ -179,7 +180,8 @@
       "mfa_required": "Enable multi-factor authentication first.",
       "insufficient_role": "This page is reserved for administrators.",
       "not_authenticated": "Session expired: sign in again.",
-      "invalid_token": "Session expired: sign in again."
+      "invalid_token": "Session expired: sign in again.",
+      "network_error": "Server unreachable: check the connection and try again (the first call can take up to a minute)."
     }
   },
   "mfa": {

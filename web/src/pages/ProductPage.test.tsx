@@ -42,4 +42,17 @@ describe("Fiche produit (A-CAT-02)", () => {
     renderAt("/produits/inconnu");
     expect(await screen.findByText(/introuvable ou n.est plus offert/)).toBeInTheDocument();
   });
+
+  it("affiche l'image téléversée (position 0) plutôt que l'ancienne image de remplacement (issue #10)", async () => {
+    const withUpload = {
+      ...detail,
+      images: [
+        { id: "i2", url: "https://res.cloudinary.com/demo-cloud/image/upload/v1/quincaillerie-laurentienne/products/p1/abc.jpg", alt_fr: "Perceuse", alt_en: "Drill", position: 0 },
+        { id: "i1", url: "https://images.quincaillerie-laurentienne.example/products/perc.jpg", alt_fr: "Ancienne", alt_en: "Old", position: 1 },
+      ],
+    };
+    mockApi((url) => (url.pathname.endsWith(`/products/${detail.id}`) ? { body: withUpload } : undefined));
+    renderAt(`/produits/${detail.id}`);
+    expect(await screen.findByRole("img", { name: "Perceuse" })).toHaveAttribute("src", "https://res.cloudinary.com/demo-cloud/image/upload/v1/quincaillerie-laurentienne/products/p1/abc.jpg");
+  });
 });

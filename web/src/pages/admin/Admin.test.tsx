@@ -157,7 +157,7 @@ describe("Administration du catalogue (A-ADM-01)", () => {
     const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "perceuse.png", { type: "image/png" });
     await userEvent.upload(screen.getByLabelText("Nouvelle image"), file);
     await userEvent.click(screen.getByRole("button", { name: "Téléverser l'image" }));
-    expect(await screen.findByText("Image ajoutée.")).toBeInTheDocument();
+    expect(await screen.findByText("Image ajoutée : c'est maintenant l'image principale du produit.")).toBeInTheDocument();
     const upload = calls.find((c) => c.path.endsWith("/images/upload"));
     expect(upload?.headers["Content-Type"]).toBe("image/png");
     expect(upload?.headers.Authorization).toBe("Bearer jeton-admin");
@@ -177,6 +177,54 @@ describe("Administration du catalogue (A-ADM-01)", () => {
     await userEvent.upload(screen.getByLabelText("Nouvelle image"), new File(["x"], "a.png", { type: "image/png" }));
     await userEvent.click(screen.getByRole("button", { name: "Téléverser l'image" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("pas encore activé");
+  });
+
+  it("signale l'image principale dans la liste des images", async () => {
+    mockApi({
+      ...signedInAdmin,
+      "GET /api/v1/admin/products": {
+        body: {
+          items: [{ ...product, images: [{ ...product.images[0], position: 0 }, { id: "i9", url: "https://images.example.com/b.jpg", alt_fr: null, alt_en: null, position: 1 }] }],
+          page: 1, size: 20, total: 1,
+        },
+      },
+    });
+    renderAt("/admin");
+    await userEvent.click(await screen.findByRole("button", { name: "Modifier PERC-18V" }));
+    expect(screen.getByRole("link", { name: "Image principale (affichée dans le catalogue)" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Image 2" })).toBeInTheDocument();
+  });
+
+  it("donne un message explicite quand le relais refuse un fichier trop lourd (413 sans JSON)", async () => {
+    mockApi(signedInAdmin);
+    const real = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).includes("/images/upload") ? new Response("Request Entity Too Large", { status: 413 }) : real(input, init),
+    ));
+    renderAt("/admin");
+    await userEvent.click(await screen.findByRole("button", { name: "Modifier PERC-18V" }));
+    await userEvent.upload(screen.getByLabelText("Nouvelle image"), new File(["x"], "a.jpg", { type: "image/jpeg" }));
+    await userEvent.click(screen.getByRole("button", { name: "Téléverser l'image" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Image trop lourde (5 Mo au maximum).");
+  });
+
+  it("donne un message explicite quand le serveur est injoignable ou renvoie une erreur inconnue", async () => {
+    mockApi(signedInAdmin);
+    const real = globalThis.fetch;
+    let mode: "network" | "500" = "network";
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(input).includes("/images/upload")) return real(input, init);
+      if (mode === "network") throw new TypeError("Failed to fetch");
+      return new Response("Internal Server Error", { status: 500 });
+    }));
+    renderAt("/admin");
+    await userEvent.click(await screen.findByRole("button", { name: "Modifier PERC-18V" }));
+    await userEvent.upload(screen.getByLabelText("Nouvelle image"), new File(["x"], "a.jpg", { type: "image/jpeg" }));
+    await userEvent.click(screen.getByRole("button", { name: "Téléverser l'image" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Serveur injoignable");
+    mode = "500";
+    await userEvent.click(screen.getByRole("button", { name: "Téléverser l'image" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("code : http_500"));
   });
 
   it("refuse un prix invalide sans appeler l'API", async () => {
