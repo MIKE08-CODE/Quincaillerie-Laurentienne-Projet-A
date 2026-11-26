@@ -2,9 +2,12 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../auth/AuthContext";
+
 export function MainLayout() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
 
   function submit(event: FormEvent) {
@@ -51,12 +54,16 @@ export function MainLayout() {
           </NavLink>
           <NavLink to="/produits">{t("nav.catalog")}</NavLink>
           <NavLink to="/magasins">{t("nav.stores")}</NavLink>
+          <NavLink to={user ? "/compte" : "/connexion"}>{user ? t("nav.account") : t("nav.login")}</NavLink>
+          {user?.role === "admin" && <NavLink to="/admin">{t("nav.admin")}</NavLink>}
         </nav>
       </header>
       <main className="main">
         <Outlet />
       </main>
-      <footer className="footer">{t("footer")}</footer>
+      <footer className="footer">
+        {t("footer")} <Link to="/confidentialite">{t("nav.privacy")}</Link>
+      </footer>
     </div>
   );
 }

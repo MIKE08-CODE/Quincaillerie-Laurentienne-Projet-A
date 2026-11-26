@@ -62,3 +62,64 @@ export async function getJson<T>(
   if (!response.ok) throw await parseError(response);
   return (await response.json()) as T;
 }
+
+/**
+ * Requête POST (ou autre) avec un corps JSON. `credentials: "same-origin"` joint le cookie httpOnly
+ * de rafraîchissement (même origine grâce au relais Vercel). Le jeton d'accès, s'il est fourni, est
+ * envoyé dans l'en-tête Authorization; il n'est jamais stocké par ce module.
+ */
+export async function sendJson<T>(
+  path: string,
+  body?: unknown,
+  { method = "POST", token }: { method?: string; token?: string } = {},
+): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path), {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "network_error", "API injoignable");
+  }
+  if (!response.ok) throw await parseError(response);
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
+/** Envoi d'un fichier brut (téléversement d'image) avec son type ; jeton d'accès obligatoire. */
+export async function sendFile<T>(path: string, file: Blob, token: string, params: Record<string, QueryValue> = {}): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      method: "POST",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": file.type },
+      body: file,
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "network_error", "API injoignable");
+  }
+  if (!response.ok) throw await parseError(response);
+  return (await response.json()) as T;
+}
+
+/** GET JSON authentifié (routes d'administration). */
+export async function getJsonAuth<T>(path: string, token: string, params: Record<string, QueryValue> = {}): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "network_error", "API injoignable");
+  }
+  if (!response.ok) throw await parseError(response);
+  return (await response.json()) as T;
+}

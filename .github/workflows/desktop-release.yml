@@ -1,0 +1,101 @@
+# Distribution de l'application de bureau par GitHub Releases (cahier des charges §6.3).
+#
+# - Pull request modifiant ce fichier, ou lancement manuel : job « verification » (lecture seule) :
+#   tests, publication Windows autonome, archive ZIP et empreinte SHA-256. RIEN n'est publié.
+# - Étiquette v* (créée par le responsable, p. ex. v0.1.0) : job « release », seul à avoir le droit
+#   d'écriture : même paquet, joint à une version GitHub créée en BROUILLON avec les notes de version.
+#   Le responsable la relit, puis la publie lui-même.
+#
+# Le paquet contient un exécutable autonome (aucun runtime .NET à installer) et un appsettings.json
+# pointant vers l'API publique ; l'URL reste modifiable (fichier ou variable QL_API_BASE_URL).
+
+name: desktop-release
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths: [".github/workflows/desktop-release.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  PUBLIC_API_URL: "https://quincaillerie-laurentienne-api.onrender.com/api/v1"
+  PROJECT: "desktop/src/QuincaillerieLaurentienne.Desktop/QuincaillerieLaurentienne.Desktop.csproj"
+
+jobs:
+  verification:
+    name: Paquet Windows autonome (vérification)
+    if: github.ref_type != 'tag'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Tests xUnit (hors intégration)
+        run: dotnet test desktop/QuincaillerieLaurentienne.Desktop.sln -c Release --filter "Category!=Integration"
+
+      - name: Paquet
+        run: ./desktop/scripts/package.ps1 -Project $env:PROJECT -ApiUrl $env:PUBLIC_API_URL -Version "verification"
+
+  release:
+    name: Version GitHub en brouillon (étiquette)
+    if: github.ref_type == 'tag'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write  # création de la version en brouillon et ajout de l'archive
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Tests xUnit (hors intégration)
+        run: dotnet test desktop/QuincaillerieLaurentienne.Desktop.sln -c Release --filter "Category!=Integration"
+
+      - name: Paquet
+        id: package
+        run: ./desktop/scripts/package.ps1 -Project $env:PROJECT -ApiUrl $env:PUBLIC_API_URL -Version $env:GITHUB_REF_NAME
+
+      - name: Version en brouillon
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        run: |
+          gh release view $env:TAG --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG $env:ARCHIVE "$env:ARCHIVE.sha256" --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create $env:TAG $env:ARCHIVE "$env:ARCHIVE.sha256" --draft --verify-tag `
+              --title "$env:TAG — L1 Fondations" `
+              --notes-file docs/gestion-projet/notes-de-version-v0.1.0.md `
+              --repo $env:GITHUB_REPOSITORY
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Échec de la création de la version en brouillon." }

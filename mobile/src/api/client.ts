@@ -21,8 +21,19 @@ export function buildUrl(path: string, params: Record<string, QueryValue> = {}, 
   return `${base}${path}${parts.length ? `?${parts.join("&")}` : ""}`;
 }
 
+/**
+ * Délai maximal d'une requête. L'offre gratuite de Render met l'API en veille après 15 minutes
+ * d'inactivité; son réveil prend jusqu'à une minute environ : un délai plus court ferait échouer le
+ * premier chargement (« API injoignable ») alors que l'API répond quelques secondes plus tard.
+ */
+export const API_TIMEOUT_MS = 60_000;
+
 /** GET JSON avec délai maximal : une API injoignable donne une erreur claire au lieu d'attendre. */
-export async function getJson<T>(path: string, params: Record<string, QueryValue> = {}, timeoutMs = 10000): Promise<T> {
+export async function getJson<T>(
+  path: string,
+  params: Record<string, QueryValue> = {},
+  timeoutMs = API_TIMEOUT_MS,
+): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;

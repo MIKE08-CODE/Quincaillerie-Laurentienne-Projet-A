@@ -9,7 +9,8 @@ application de bureau.
 
 | | |
 |---|---|
-| **URL en ligne** | **À compléter** : aucun déploiement n'est encore effectué (voir [Déploiement](#déploiement)) |
+| **Site web** | <https://quincaillerie-laurentienne-seven.vercel.app> (Vercel) |
+| **API** | <https://quincaillerie-laurentienne-api.onrender.com> — santé : [`/health`](https://quincaillerie-laurentienne-api.onrender.com/health), documentation : [`/docs`](https://quincaillerie-laurentienne-api.onrender.com/docs) (Render) |
 | **Vidéo de démonstration** | À compléter |
 | **Version** | L1 — Fondations, cible `v0.1.0` (étiquette non encore créée) |
 
@@ -94,10 +95,23 @@ Les mêmes suites sont exécutées par les workflows GitHub Actions de chaque ap
 
 ## Déploiement
 
-**État : préparé, non effectué.** Hébergement provisoire envisagé : Neon (PostgreSQL 16), Render (API),
-Vercel (web). Procédure, variables, migrations, amorçage, redéploiement et blocages :
-[`docs/deploiement/deploiement-l1.md`](docs/deploiement/deploiement-l1.md). Aucun service n'est activé
-et aucun secret n'est dans le dépôt.
+**État : déployé (offres gratuites).**
+
+| Composant | Hébergeur | URL | Déploiement |
+|---|---|---|---|
+| Base de données | Neon (PostgreSQL 16, US East) | — (privée) | Migrations Alembic au démarrage de l'API |
+| API | Render (Blueprint `render.yaml`) | <https://quincaillerie-laurentienne-api.onrender.com> | Automatique à chaque fusion sur `main` |
+| Web | Vercel (dossier `web`) | <https://quincaillerie-laurentienne-seven.vercel.app> | Automatique à chaque fusion sur `main` |
+
+Le site appelle `/api/v1` sur son propre domaine ; Vercel relaie vers Render (`web/vercel.json`). Les
+clients mobile et bureau se branchent sur l'API publique avec `EXPO_PUBLIC_API_BASE_URL` et
+`QL_API_BASE_URL`. L'offre gratuite de Render met l'API en veille après 15 minutes d'inactivité :
+la première requête peut prendre environ une minute.
+
+Procédure, variables, migrations, amorçage, redéploiement et limites :
+[`docs/deploiement/deploiement-l1.md`](docs/deploiement/deploiement-l1.md). Les secrets sont saisis
+uniquement dans les tableaux de bord des hébergeurs ; aucun n'est dans le dépôt. Les identifiants des
+comptes de démonstration sont transmis en privé au responsable du projet (cahier §6.3).
 
 ## Équipe, documentation et licence
 

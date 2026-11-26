@@ -197,22 +197,22 @@ Ces contrôles constituent la **conception cible**. Leur présence effective doi
 
 ```mermaid
 flowchart TB
-    user["Utilisateurs"] -->|"HTTPS"| webhost["Hébergement Web<br/>Fournisseur à confirmer"]
-    user -->|"HTTPS"| apihost["Hébergement API FastAPI<br/>Fournisseur à confirmer"]
-    webhost -->|"HTTPS /api/v1"| apihost
+    user["Utilisateurs"] -->|"HTTPS"| webhost["Vercel (Hobby)<br/>site statique + réécriture /api"]
+    user -->|"HTTPS"| apihost["Render (offre gratuite)<br/>API FastAPI, derrière Cloudflare"]
+    webhost -->|"HTTPS /api/* (même origine pour le navigateur)"| apihost
     mobile["Application Mobile"] -->|"HTTPS /api/v1"| apihost
     desktop["Application Bureau"] -->|"HTTPS /api/v1"| apihost
-    apihost -->|"Connexion privée / TLS selon hébergeur"| db[("PostgreSQL 16 + pgvector<br/>Non exposé publiquement")]
+    apihost -->|"TLS (sslmode=require)"| db[("Neon — PostgreSQL 16<br/>unaccent ; pgvector au L2")]
     apihost -->|"API / webhooks"| stripe["Stripe test"]
-    apihost -->|"API"| email["Courriel / LLM"]
+    apihost -->|"API HTTPS"| email["Brevo (courriel, à activer) / LLM (L2)"]
 ```
 
 - **Local :** API et base de test, avec procédure d'installation documentée dans le README; les trois clients sont exécutés dans leurs environnements de développement respectifs.
-- **Démonstration L1 :** Web et API accessibles sur des URL de test; clients Mobile et Bureau configurés pour joindre l'API de démonstration.
+- **Démonstration L1 (déployée le 21 novembre 2026) :** web <https://quincaillerie-laurentienne-seven.vercel.app>, API <https://quincaillerie-laurentienne-api.onrender.com> ; clients mobile et bureau configurés pour l'API publique (tests d'intégration réussis). Offres gratuites : l'API se met en veille après 15 minutes d'inactivité.
 - **Environnements ultérieurs :** séparation des secrets et données entre développement, test et déploiement; aucun identifiant de test ne doit être réutilisé en production.
 - **Migrations et sauvegardes :** migrations Alembic versionnées, procédure de sauvegarde/restauration à documenter et tester selon les exigences non fonctionnelles.
 - **Tâches en arrière-plan :** stratégie d'ordonnancement, reprise sur erreur et supervision **à décider** avant l'implémentation des réservations, courriels et ingestion RAG.
-- **Hébergement et CI/CD :** fournisseur, stratégie de publication et noms d'URL **à confirmer**; aucun service précis n'est présumé déployé.
+- **Hébergement et CI/CD :** Neon (base), Render (API, Blueprint `render.yaml` : migrations et amorçage au démarrage), Vercel (web) ; déploiement automatique à chaque fusion sur `main` ; procédure : `docs/deploiement/deploiement-l1.md`.
 
 ## 7. État de réalisation et validation (complément)
 
@@ -225,7 +225,7 @@ flowchart TB
 | Bureau WPF/.NET 8 | Oui | **En PR** #32 (MVVM ; CI `desktop-ci` verte) |
 | Paiement, stocks et cueillette | Oui, cible des jalons suivants | Tables créées (PR #29) ; aucune route (L2) |
 | RAG | Oui, cible des jalons suivants | Non commencé |
-| Déploiement public | Cible décrite | **Non déployé** ; procédure Neon + Render + Vercel préparée (PR #33) |
+| Déploiement public | Cible décrite | **Déployé** (Neon, Render, Vercel), vérifié par requêtes HTTP en lecture seule |
 
 État au 21 novembre 2026 : « en PR » signifie poussé, contrôles GitHub au vert, **non fusionné**.
 
@@ -239,4 +239,4 @@ flowchart TB
 | 1.1 | Diagrammes convertis en Mermaid; ajout du C4 composants, détail des ADR, sécurité, déploiement et traçabilité, sans changer les choix initiaux. |
 | 1.2 | État de réalisation réel (PR #21, #29 à #33) ; ADR 004 à 008 ajoutés dans `docs/adr/` ; ADR 001 à 003 inchangés. |
 
-**Décisions ouvertes :** auteur et approbateur; approbation des ADR; hébergeur et URL de démonstration; mécanisme des tâches asynchrones; stockage et rafraîchissement des jetons Mobile/Bureau; preuves de conformité de l'implémentation.
+**Décisions ouvertes :** auteur et approbateur; approbation des ADR; stockage des images (ADR-009); mécanisme des tâches asynchrones; stockage et rafraîchissement des jetons Mobile/Bureau; preuves de conformité de l'implémentation.

@@ -1,42 +1,88 @@
-# Notes de version — v0.1.0 (L1 — Fondations) — BROUILLON
+# Notes de version — v0.1.0 (L1 — Fondations) — PRÊTES À VALIDER
 
-**Non publiées.** L'étiquette `v0.1.0` n'existe pas : elle sera créée après la fusion des PR et le
-déploiement, sur autorisation. Les éléments marqués « en PR » ne sont pas encore sur `main`.
+**Non publiées.** L'étiquette `v0.1.0` et la version GitHub seront créées **uniquement sur autorisation du
+responsable**, après la fusion des PR retenues et la validation finale. Les éléments marqués *(PR #n)*
+ne sont pas encore sur `main` au 22 novembre 2026 (`main` = `255e219`).
+
+## URL publiques
+
+| | |
+|---|---|
+| Site web | <https://quincaillerie-laurentienne-seven.vercel.app> |
+| API | <https://quincaillerie-laurentienne-api.onrender.com> (`/health`, `/docs`, `/api/v1/...`) |
+| Vidéo de démonstration | À fournir par l'équipe |
+
+Offres gratuites (Neon, Render, Vercel). L'API se met en veille après 15 minutes d'inactivité : la
+première requête peut prendre jusqu'à une minute.
 
 ## Nouveautés
 
-### API (FastAPI, Python 3.11)
-- Comptes et authentification : inscription avec consentement, vérification du courriel, connexion
-  (JWT 15 min + cookie de rafraîchissement httpOnly), politique de mot de passe et Argon2id,
-  réinitialisation, rôles et affectation au magasin, verrouillage progressif, MFA TOTP du personnel
-  (A-AUTH-01 à 07) — *fusionné*.
-- Catalogue public : catégories, magasins, produits paginés (≤ 50) avec tris et filtres, fiche produit
-  bilingue, disponibilité calculée par magasin, recherche plein texte FR/EN sans accents
-  (A-CAT-01 à 03) — *en PR #29*.
-- Administration du catalogue : produits (création, PATCH, désactivation, images par URL), catégories
-  et marques (A-ADM-01) — *en PR #29*.
-- Migrations de toutes les entités Must ; amorçage de démonstration (3 magasins, 157 produits, stocks)
-  — *en PR #29*.
+### API (FastAPI 0.165, Python 3.11, PostgreSQL 16)
+- **Authentification (A-AUTH-01 à 07)** : inscription avec consentement, vérification du courriel,
+  connexion (JWT 15 min + cookie httpOnly avec rotation), politique de mot de passe et Argon2id,
+  réinitialisation (30 min, usage unique), rôles et affectation au magasin, verrouillage progressif,
+  limitation de débit par IP (non falsifiable derrière Cloudflare), MFA TOTP obligatoire du personnel.
+- **Catalogue public (A-CAT-01 à 03)** : catégories, magasins, produits paginés (≤ 50) avec tris et
+  filtres, fiche bilingue, disponibilité par magasin **sans quantités**, recherche plein texte FR/EN
+  insensible aux accents.
+- **Administration (A-ADM-01)** : produits, catégories et marques (création, PATCH, désactivation),
+  images par URL https ; **téléversement d'images validé** (type réel, taille, dimensions)
+  (PR #49) ; adaptateur de stockage Cloudinary signé, **inactif tant que le responsable ne l'active pas**
+  *(PR #54, ADR-009)*.
+- **Données** : migrations de toutes les entités Must (head `e2c9a4b7d3f1`) ; amorçage de démonstration
+  (3 magasins, 157 produits, stocks) ; script des comptes de démonstration par rôle, sans mot de passe
+  exposé (non exécuté en production).
+- Courriels transactionnels par l'API HTTPS de Brevo (le SMTP sortant est bloqué sur Render) ; un échec
+  d'envoi n'interrompt plus le parcours.
 
-### Clients
-- Web React 18 : accueil, catalogue, recherche, fiche produit, magasins — *en PR #30*.
-- Mobile Expo : liste des produits et navigation par catégorie — *en PR #31*.
-- Bureau WPF : liste des produits et recherche — *en PR #32*.
+### Web (React 18, Vite)
+- Accueil, catalogue avec catégories, tris et pagination, recherche, fiche produit et disponibilités,
+  magasins, bascule FR/EN ; image de remplacement locale.
+- Inscription, vérification du courriel, connexion (avec MFA), mot de passe oublié et réinitialisation,
+  compte (PR #50) ; configuration de la MFA du personnel, administration du catalogue (`/admin` :
+  noms, prix, visibilité, images) et politique de confidentialité en **ébauche à valider** *(PR #55)*.
+- En-têtes de sécurité (CSP stricte, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) ; `/api` relayé
+  vers Render (même origine).
 
-### DevOps
-- Protection de `main`, `api-ci`, `security` (CodeQL, Gitleaks), Dependabot — *fusionné*.
-- `web-ci`, `mobile-ci`, `desktop-ci` — *en PR #30 à #32*.
-- README d'installation et procédure de déploiement — *en PR #33*.
+### Mobile (Expo SDK 58, React Native)
+- Liste des produits depuis l'API en ligne, filtre par catégorie, image de remplacement.
+- Délai de requête de 60 s pour couvrir le réveil de l'API *(PR #51)*.
+
+### Bureau (.NET 8, WPF)
+- Liste des produits et recherche depuis l'API en ligne ; URL et délai configurables
+  (`appsettings.json` ou `QL_API_BASE_URL`) ; délai par défaut de 60 s *(PR #51)*.
+
+### DevOps et sécurité
+- `main` protégée (PR obligatoire, squash, `api-ci` et `security` obligatoires, fils résolus).
+- CI : `api-ci` (ruff, pytest avec couverture sur PostgreSQL 16, Bandit, pip-audit, démarrage en mode
+  production), `web-ci`, `mobile-ci`, `desktop-ci`, `security` (CodeQL Python, workflows, JS/TS, C# ;
+  Gitleaks sur tout l'historique).
+- Dependabot : pip, npm (web, mobile), NuGet, GitHub Actions ; secret scanning et push protection.
+- Déploiement automatique de l'API (Render, migrations et amorçage au démarrage) et du web (Vercel) à
+  chaque fusion sur `main`.
+- Distribution du bureau : `desktop-release` produit un exécutable Windows autonome (ZIP + SHA-256) et
+  crée la version GitHub en brouillon à la poussée de l'étiquette (PR #53).
+
+## Tests (dernier relevé)
+
+| Composant | Tests automatisés | Vérifié en production (HTTP) |
+|---|---|---|
+| API | 370 sur `main` ; 406 avec #49 ; couverture 97 % | Catalogue, recherche, fiches, erreurs, limitation de débit |
+| Web | 25 sur `main` ; 41 avec #50 | Build servi, en-têtes, relais `/api` |
+| Mobile | 11 sur `main` ; 12 avec #51 | Test d'intégration HTTPS contre l'API publique : réussi |
+| Bureau | 19 sur `main` ; 20 avec #51 | Test d'intégration contre l'API publique : réussi |
 
 ## Limitations connues
-- **Non déployé** à ce jour (URL à compléter).
-- Envoi de courriels absent en production (inscription et réinitialisation).
+- **Courriels non envoyés en production** (`EMAIL_BACKEND=disabled`) : inscription et réinitialisation
+  ne peuvent pas aboutir en ligne tant que Brevo n'est pas configuré.
+- **Téléversement d'images** : répond 503 tant qu'aucun stockage persistant n'est activé.
+- Interface d'administration **minimale** (produits) ; catégories et marques par l'API seulement.
+- Politique de confidentialité en **ébauche à valider** (non définitive).
 - Format d'erreur `ErrorOut` du contrat non encore appliqué (ADR-008).
-- Images désignées par URL ; pas de téléversement de fichiers.
-- Interface web d'administration non réalisée (API seulement).
+- Démonstration mobile sur appareil : à réaliser ; aucun APK ni lien de build Expo publié.
+- Alerte Dependabot n° 2 (`minimatch`, outillage Expo et Jest, gravité modérée) : risque toléré en
+  attente d'un correctif amont, réévaluation au plus tard le 2026-12-21.
 
 ## Migrations
-Head Alembic : `e2c9a4b7d3f1`. Appliquer `alembic upgrade head`, puis `python -m app.seed.seed_l1`.
-
-## URL
-API : à compléter · Web : à compléter · Vidéo de démonstration : à compléter.
+Head Alembic : `e2c9a4b7d3f1`. En production, Render exécute `alembic upgrade head` puis
+`python -m app.seed.seed_l1 --allow-production` (idempotent) à chaque démarrage.
