@@ -31,7 +31,7 @@ class RefreshToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class OneTimeTokenPurpose(str, enum.Enum):
+class OneTimeTokenPurpose(enum.StrEnum):
     EMAIL_VERIFICATION = "email_verification"  # A-AUTH-01
     PASSWORD_RESET = "password_reset"  # noqa: S105 — nom d'usage (A-AUTH-04), pas un secret  # nosec B105
 

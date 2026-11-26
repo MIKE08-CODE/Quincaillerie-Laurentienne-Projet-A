@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
 
-class ConsentType(str, enum.Enum):
+class ConsentType(enum.StrEnum):
     PRIVACY = "privacy"  # politique de confidentialité (obligatoire à l'inscription)
     MARKETING = "marketing"  # courriels promotionnels (sur adhésion seulement, A-PRV-04)
 
