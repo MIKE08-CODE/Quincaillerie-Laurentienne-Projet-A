@@ -1,5 +1,7 @@
 # Plan de démonstration L1 — 20 minutes + questions (cahier §8)
 
+> Procédures pas à pas des grilles W, M et B : [`recette-finale-l1.md`](recette-finale-l1.md).
+
 **Rien dans ce plan n'a encore été répété.** Chaque séquence indique le niveau de preuve disponible
 aujourd'hui (TA : test automatisé ; HTTP : vérifié en production par requêtes ; DÉMO : à montrer en
 direct, jamais réalisé par l'outillage).
@@ -24,9 +26,9 @@ direct, jamais réalisé par l'outillage).
 | 2–5 | Architecture | À désigner | C4 niveaux 1-2 ; ADR (verrouillage, jetons, Expo, marques, grand livre, recherche, erreurs, images) | `docs/architecture/`, `docs/adr/` |
 | 5–7 | Données et sécurité | À désigner | Entités Must et migrations ; STRIDE paiement/cueillette ; mesures en place | Modèle de données, modèle de menaces |
 | 7–12 | **Web** | À désigner | Catégorie « Perceuses » → tri par prix → fiche `PERC-18V` (disponibilité par magasin, image de remplacement) → recherche « drill » puis « equerre » → bascule FR/EN | HTTP ✔ ; DÉMO à faire |
-| 12–14 | **Authentification web** | À désigner | Connexion du compte client → « Mon compte » → déconnexion ; mauvais mot de passe → message neutre. Si Brevo est configuré : inscription et lien de vérification reçu | TA ✔ (#50) ; DÉMO à faire ; courriel **seulement si la preuve P6 est obtenue** |
+| 12–14 | **Authentification web** | À désigner | Connexion du compte client → « Mon compte » → déconnexion ; mauvais mot de passe → message neutre ; mot de passe oublié → courriel Brevo reçu | TA ✔ (#50) ; réinitialisation réelle ✔ (déclarée) ; vérification à l'inscription à tester (P6) |
 | 14–16 | **Mobile et bureau** | À désigner | Mobile : liste, catégorie ; bureau : liste et recherche ; même API en ligne | TA d'intégration ✔ ; DÉMO à faire |
-| 16–18 | Administration | À désigner | Connexion du compte administrateur (code MFA) → `/admin` → modifier le prix de `PERC-18V`, visible sur la fiche du site → téléverser une image (si Cloudinary est activé ; sinon message « pas encore activé ») ; `/docs` : `/api/v1/admin/products` sans jeton → 401, client → 403 | TA ✔ (#55) ; DÉMO à faire |
+| 16–18 | Administration | À désigner | Connexion du compte administrateur (code MFA) → `/admin` → modifier le prix de `PERC-18V`, visible sur la fiche du site → téléverser une image, qui devient l'image principale de la carte et de la fiche ; `/docs` : `/api/v1/admin/products` sans jeton → 401, client → 403 | TA ✔ (#55, #64) ; C1 à C8 ✔ (déclarés) ; DÉMO à répéter |
 | 18–19 | DevOps | À désigner | Ruleset de `main`, PR avec CI verte, CodeQL (4 langages), Dependabot, Gitleaks, déploiement automatique | GitHub ✔ |
 | 19–20 | Bilan | À désigner | Huit artéfacts, limites assumées, plan L2 | Matrice de traçabilité |
 

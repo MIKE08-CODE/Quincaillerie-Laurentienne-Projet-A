@@ -4,6 +4,8 @@
 |---|---|---|
 | [Décisions et validations](decisions-et-validations-l1.md) | Les 12 décisions humaines, dans l'ordre, avec procédure | **À traiter par le responsable** |
 | [Données de l'équipe à compléter](donnees-equipe-a-completer.md) | Modèle unique : équipe, sprints, responsables, heures, réunions, démonstrations | **À remplir** |
+| [Recette finale et livraison](recette-finale-l1.md) | Démonstrations W/M/B, issue #7, ADR, confidentialité, distribution, publication | **Guide des dernières étapes** |
+| [Registre des preuves](registre-preuves-l1.md) | P1 à P11 : niveau technique, déclaré ou à fournir | Tenu à jour |
 | [Matrice de traçabilité et de conformité](matrice-tracabilite-l1.md) | Exigence → issue → PR → tests → preuve → statut ; preuves à fournir | **Référence de la remise** |
 | [Checklist des huit livrables L1](checklist-livrables-l1.md) | Synthèse des artéfacts et blocages | Tenue à jour |
 | [Preuves de tests et de CI](preuves-tests-ci.md) | Exécutions GitHub Actions, résultats locaux, production | Tenue à jour |

@@ -1,5 +1,16 @@
 # Matrice de traçabilité et de conformité — L1 (v0.1.0)
 
+> **Mise à jour du 26 novembre 2026 au soir** (`main` = `a8d88cf`) — prévaut sur les blocs suivants :
+> - **A-ADM-01 : CONFORME** (issue #10 fermée). Production : image Cloudinary servie en image principale
+>   (ADHE-COLB), routes d'administration en 401 sans jeton ; C2 à C8 réussis selon le responsable
+>   (captures à archiver, P10). Corrections : #63 (aucun secret dans les erreurs de démarrage), #64
+>   (l'image téléversée devient l'image principale).
+> - A-AUTH-04 : réinitialisation réelle réussie selon le responsable (P6 partielle). **A-AUTH-01 : non
+>   testé en réel.**
+> - Comptes de démonstration : quatre comptes créés et vérifiés, MFA de l'administrateur activée (déclaré, P11).
+> - Issues #6, #8, #9, #10, #26 fermées ; #7 attend la démonstration mobile M3.
+> - Statut par artéfact : [`checklist-livrables-l1.md`](checklist-livrables-l1.md).
+
 > **Mise à jour du 26 novembre 2026** (`main` = `122a50e`, seule PR ouverte : #42) — prévaut sur le bloc
 > du 23 novembre et sur les lignes ci-dessous :
 > - #54 (Cloudinary), #55 (`/admin`, MFA web, confidentialité) et #56 fusionnées le 23 novembre : les mentions

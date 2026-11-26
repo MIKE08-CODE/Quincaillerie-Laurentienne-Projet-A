@@ -22,7 +22,10 @@ gh issue close 9 --comment "Critères satisfaits : perceuse 13 et drill 14 résu
 **#7 reste ouverte** jusqu'à la démonstration mobile de la navigation par catégorie (grille M3).
 **#10 reste ouverte** jusqu'au test réel du téléversement (décision 4).
 
-## 3. Courriels Brevo (A-AUTH-01, A-AUTH-04)
+## 3. Courriels Brevo (A-AUTH-01, A-AUTH-04) — **configuré ; A-AUTH-01 à tester**
+
+Configuré le 26 novembre 2026 ; réinitialisation réelle réussie selon le responsable. Reste : test réel
+de la vérification à l'inscription et captures (preuve P6).
 
 1. Créer un compte gratuit sur brevo.com (sans carte), confirmer une adresse d'expédition, créer une clé d'API.
 2. Render → service de l'API → *Environment* : `EMAIL_BACKEND=brevo`, `EMAIL_FROM_ADDRESS=<adresse confirmée>`,
@@ -32,7 +35,9 @@ gh issue close 9 --comment "Critères satisfaits : perceuse 13 et drill 14 résu
    nouveau mot de passe → connexion. Captures = preuve P6. Les courriels ne sont déclarés fonctionnels
    qu'après ce test.
 
-## 4. Stockage des images — Cloudinary (ADR-009)
+## 4. Stockage des images — Cloudinary (ADR-009) — **fait**
+
+Activé le 26 novembre 2026 ; C1 à C8 réussis (déclarés), image servie en production ; issue #10 fermée.
 
 Décider : **activer Cloudinary** (recommandé, offre gratuite sans carte) **ou** accepter pour la L1 la limitation
 « images par URL https seulement, téléversement 503 ».
@@ -42,7 +47,10 @@ Si activation (après fusion de #54) : compte gratuit sur cloudinary.com, puis R
 `CLOUDINARY_API_SECRET=<secret>` (secret). Test réel : `/admin` (après #55) → téléverser un JPEG → l'image
 s'affiche sur la fiche ; retirer l'image → elle disparaît du tableau de bord Cloudinary.
 
-## 5. Comptes de démonstration
+## 5. Comptes de démonstration — **fait**
+
+Quatre comptes créés et vérifiés en production le 26 novembre 2026 ; MFA de l'administrateur activée.
+Reste : MFA du commis et du gérant à leur première connexion (démonstration W7).
 
 Autoriser explicitement leur création en production, puis suivre `procedure-comptes-demo.md` (mots de
 passe saisis par vous dans un terminal, jamais écrits). Configurer ensuite la MFA du commis, du gérant et

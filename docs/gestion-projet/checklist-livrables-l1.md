@@ -1,32 +1,22 @@
 # Checklist des huit livrables L1 (§9.1 du cahier)
 
-État au **22 novembre 2026** (`main` = `255e219` ; PR ouvertes #49, #50, #51). Le détail exigence par
-exigence, avec les preuves et le niveau de preuve (test automatisé, HTTP, démonstration), est dans la
-[matrice de traçabilité](matrice-tracabilite-l1.md).
+État au **26 novembre 2026** (`main` = `a8d88cf`, seule PR ouverte : Dependabot #42). Détail exigence
+par exigence : [matrice de traçabilité](matrice-tracabilite-l1.md) ; niveau de chaque preuve :
+[registre des preuves](registre-preuves-l1.md) ; étapes restantes : [recette finale](recette-finale-l1.md).
 
-| # | Artéfact | Statut | Reste à faire | Qui |
+| # | Artéfact (§9.1) | Statut | Preuves | Reste à faire |
 |---|---|---|---|---|
-| 1 | Vision et exigences | PARTIEL | Validation ; lier les exigences L2/L3 à des issues | Responsable |
-| 2 | Architecture (C4, ADR) | CONFORME (contenu) | Approuver les ADR « Proposé » (001 à 009) | Responsable |
-| 3 | Modèle de données, migrations en production | PARTIEL | Joindre le journal Render `alembic upgrade head` (preuve P1) | Responsable |
-| 4 | Modèle de menaces | CONFORME (contenu) | Validation | Responsable |
-| 5 | Contrat OpenAPI | CONFORME | — | — |
-| 6 | Incrément fonctionnel déployé | PARTIEL | Fusionner #49, #50, #51 ; Brevo ; comptes de démonstration ; stockage des images ; démonstration mobile ; captures | Responsable et équipe |
-| 7 | DevOps | PARTIEL | Décider de l'approbation exigée (§6.1) et des contrôles obligatoires ; alerte n° 2 | Responsable |
-| 8 | Gestion de projet | PARTIEL | [Tableau](https://github.com/users/MIKE08-CODE/projects/1) prêt ; sprints, responsables, heures et comptes rendus réels | Équipe |
+| 1 | Vision et exigences | CONFORME (contenu) | 33 récits « En tant que… », critères, MoSCoW, liens vers les issues | Approbation au procès-verbal |
+| 2 | Architecture (C4 1–2, ≥ 3 ADR) | CONFORME (contenu) | Diagrammes de contexte et de conteneurs ; 9 ADR | Statuer sur les ADR « Proposé » (001 à 003, 007, 009) |
+| 3 | Modèle de données, dictionnaire, migrations en production | CONFORME | 3 diagrammes ER, dictionnaire ; 5 migrations ; démarrage Render `alembic upgrade head && …` réussi sur `a8d88cf` (P1) | Capture du journal (complément) |
+| 4 | Modèle de menaces STRIDE (paiement, cueillette) | CONFORME (contenu) | Flux paiement et cueillette, frontières de confiance, mesures reliées à 18 exigences | Approbation au procès-verbal |
+| 5 | Contrat OpenAPI | CONFORME | `docs/api/openapi-l1.json` identique à la production (28 chemins, 35 schémas) ; routes prévues documentées | — |
+| 6 | Incrément fonctionnel déployé, trois clients connectés | PARTIEL | Catalogue, fiche, recherche, authentification, administration et images en production ; mobile et bureau : tests d'intégration contre l'API en ligne | **A-AUTH-01 à tester en réel** (P6) ; démonstrations W, M, B ; issue #7 (M3) |
+| 7 | DevOps | PARTIEL | Ruleset de `main` (PR, CI obligatoire, squash) ; 5 workflows verts ; déploiement automatique ; Dependabot, CodeQL, Gitleaks, secret scanning ; README d'installation ; gabarit de PR (§6.1) | **§6.1 : une approbation exigée** (0 aujourd'hui, un seul collaborateur) ; alerte Dependabot n° 2 |
+| 8 | Gestion de projet | PARTIEL | Tableau (70 éléments) ; registre des risques ; gabarits de rapports, feuilles de temps et comptes rendus | **Données réelles de l'équipe** : sprints, heures, réunions, rétrospectives (P8) |
 
-**La L1 n'est pas encore livrable** : données de l'équipe absentes (artéfact 8), démonstrations non faites,
-courriels et stockage des images inactifs en production, validations et étiquette `v0.1.0` absentes.
-Liste ordonnée des décisions et procédures : [`decisions-et-validations-l1.md`](decisions-et-validations-l1.md) ;
-données à fournir : [`donnees-equipe-a-completer.md`](donnees-equipe-a-completer.md).
+Hors artéfacts : version étiquetée `v0.1.0` avec notes (§6.1, §8) — **après autorisation écrite** ;
+procès-verbal signé (P9).
 
-## Ordre recommandé pour finaliser
-
-1. Fusionner #51 (délai des clients), #50 (authentification web), #49 (téléversement), puis la PR
-   documentaire de remise — chacune après mise à jour avec `main` et CI verte.
-2. Configurer Brevo dans Render, puis faire le test réel (guide de déploiement §4 bis).
-3. Autoriser et créer les comptes de démonstration (`procedure-comptes-demo.md`).
-4. Accord sur Cloudinary (ADR-009) — ou accepter la limitation pour L1.
-5. Renseigner dans le [tableau](https://github.com/users/MIKE08-CODE/projects/1) le sprint et le responsable de chaque élément (valeurs « À compléter »).
-6. Remplir sprints, feuilles de temps et comptes rendus ; répéter la démonstration et remplir les grilles.
-7. Faire signer le procès-verbal, puis autoriser l'étiquette `v0.1.0` et la version GitHub.
+**La L1 n'est pas encore livrable** : A-AUTH-01 non testé en réel, démonstrations et captures à faire,
+données de l'équipe absentes, écart §6.1, validations et étiquette à venir.
