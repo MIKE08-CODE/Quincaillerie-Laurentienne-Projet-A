@@ -21,6 +21,9 @@ export function VerifyEmailPage() {
     started.current = true;
     const token = takeTokenFromHash();
     if (!token) {
+      // Le jeton est lu puis retiré de l'URL (système externe) une seule fois : cette lecture doit
+      // rester dans l'effet, et l'absence de jeton n'est connue qu'ici.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- état issu de l'URL, lue une seule fois
       setState("missing");
       return;
     }
