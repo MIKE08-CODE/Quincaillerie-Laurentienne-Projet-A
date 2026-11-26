@@ -1,5 +1,18 @@
 # Matrice de traçabilité et de conformité — L1 (v0.1.0)
 
+> **Mise à jour du 26 novembre 2026** (`main` = `122a50e`, seule PR ouverte : #42) — prévaut sur le bloc
+> du 23 novembre et sur les lignes ci-dessous :
+> - #54 (Cloudinary), #55 (`/admin`, MFA web, confidentialité) et #56 fusionnées le 23 novembre : les mentions
+>   « en PR » du bloc suivant sont périmées. A-ADM-01 reste **PARTIEL** (stockage non activé ni testé en réel).
+> - Dépendances : 6 PR Dependabot et 4 PR correctives fusionnées (#57 à #61, détail : décision 10 de
+>   `decisions-et-validations-l1.md`) ; alertes Dependabot n° 3 et 4 corrigées ; n° 2 toujours tolérée (R14).
+> - Vérifié le 26 novembre sur `122a50e` : 5 workflows verts, CodeQL 0 alerte ; API (Render, `9ee1603`) :
+>   `/health` 200, OpenAPI 28 chemins, 401 sans jeton sur `/auth/me` et `/admin/products`, 157 produits ;
+>   web (Vercel) : pages publiques, `/admin`, `/compte/mfa`, `/confidentialite` en 200 ; tests d'intégration
+>   du mobile (13 tests) et du bureau (21 tests) réussis contre l'API de production.
+> - Non testé en réel : courriels (Brevo inactif), stockage des images, connexion avec un vrai compte,
+>   démonstrations sur appareil.
+
 > **Mise à jour du 23 novembre 2026** (`main` = `24a3436`, PR ouvertes #54 et #55) — prévaut sur les lignes
 > ci-dessous lorsqu'elles diffèrent :
 > - #49, #50, #51, #52, #53 fusionnées ; tableau GitHub Projects complété (artéfact 8 : structure prête).
