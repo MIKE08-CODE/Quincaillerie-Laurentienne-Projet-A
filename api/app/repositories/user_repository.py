@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Consent, User
+from app.models import Consent, ConsentType, User
 
 
 def get_by_id(db: Session, user_id: uuid.UUID) -> User | None:
@@ -35,3 +35,16 @@ def add_consent(db: Session, consent: Consent) -> Consent:
     db.add(consent)
     db.flush()
     return consent
+
+
+def get_active_consent(db: Session, user_id: uuid.UUID, consent_type: ConsentType) -> Consent | None:
+    """Consentement en vigueur (non retiré) d'un type donné, le plus récent, ou None (A-PRV-01).
+
+    Les retraits remplissent `revoked_at` sans supprimer la ligne : l'historique reste une preuve.
+    """
+    stmt = (
+        select(Consent)
+        .where(Consent.user_id == user_id, Consent.type == consent_type, Consent.revoked_at.is_(None))
+        .order_by(Consent.granted_at.desc())
+    )
+    return db.scalars(stmt).first()

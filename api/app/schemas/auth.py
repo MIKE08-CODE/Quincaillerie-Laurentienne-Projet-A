@@ -14,7 +14,16 @@ Choix de sécurité :
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, SecretStr, StringConstraints
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    StringConstraints,
+    model_validator,
+)
 
 from app.models import UserRole
 
@@ -139,6 +148,35 @@ class MfaSetupResponse(BaseModel):
     )
 
 
+class ProfileUpdate(_Input):
+    """Modification partielle du profil (A-PRV-01), envoyée à `PATCH /auth/me`.
+
+    - Seuls les champs envoyés sont modifiés; un champ absent reste inchangé.
+    - `null` est refusé (422) : le nom et la langue sont obligatoires, et `marketing_opt_in` vaut
+      `true` ou `false`.
+    - Le courriel, le rôle et le mot de passe ne sont PAS modifiables ici : `extra="forbid"` (hérité de
+      `_Input`) refuse tout autre champ, ce qui bloque aussi les tentatives d'élévation de privilèges.
+    """
+
+    first_name: Name | None = Field(default=None, description="Prénom.", examples=["Marie"])
+    last_name: Name | None = Field(default=None, description="Nom de famille.", examples=["Gagnon"])
+    language: Literal["fr", "en"] | None = Field(
+        default=None, description="Langue préférée pour les courriels et l'interface."
+    )
+    marketing_opt_in: bool | None = Field(
+        default=None,
+        description="`true` : accepte les courriels promotionnels; `false` : retire ce consentement "
+        "(l'historique est conservé, Loi 25).",
+    )
+
+    @model_validator(mode="after")
+    def _no_null(self) -> "ProfileUpdate":
+        for name in self.model_fields_set:
+            if getattr(self, name) is None:
+                raise ValueError(f"`{name}` ne peut pas être null")
+        return self
+
+
 class MessageResponse(BaseModel):
     message: str = Field(description="Message à afficher à l'utilisateur.")
 
@@ -157,6 +195,11 @@ class UserResponse(BaseModel):
     is_email_verified: bool = Field(description="Un compte non vérifié ne peut pas passer de commande.")
     mfa_enabled: bool = Field(description="`true` si l'authentification multifacteur est activée.")
     store_ids: list[uuid.UUID] = Field(description="Magasins auxquels le commis ou le gérant est affecté.")
+    # Calculé à partir de la table `consents` (consentement MARKETING non retiré), pas une colonne de
+    # `users` : il est rempli par le routeur avec profile_service.marketing_opt_in().
+    marketing_opt_in: bool = Field(
+        default=False, description="`true` si le client accepte les courriels promotionnels (A-PRV-01)."
+    )
 
 
 class ErrorDetail(BaseModel):
