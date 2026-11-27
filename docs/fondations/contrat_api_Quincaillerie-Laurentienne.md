@@ -514,7 +514,7 @@ Elles proviennent de la liste A.7. Les jalons suivent la portée de L2 et de L3 
 | `POST /staff/pickups/validate` | Commis ou gérant (son magasin) | A-PCK-02, A-PCK-03 | Valider la cueillette |
 | `GET /staff/inventory` | Commis ou gérant | A-INV-01 | Consulter le stock |
 | `POST /staff/inventory/receive` | Commis ou gérant | A-INV-02 | Réception de marchandises |
-| `GET/PUT /me` | Client | A-PRV-01 | Profil du client |
+| `GET/PUT /me` | Client | A-PRV-01 | Profil du client — **implémenté** en `GET /auth/me` et `PATCH /auth/me` (modification partielle, comme DEC-03 ; #68) |
 | `POST /chat/messages`, `POST /chat/feedback` | Public (débit limité) | section 7, A.9 | Agent « Conseiller Laurentien » et rétroaction |
 
 ### 10.2 Prévues pour L3 (version finale)
@@ -864,6 +864,7 @@ Source : `GET /openapi.json` de l'API exécutée au commit `852486c` (branche `f
 | `POST /auth/login` | A-AUTH-02, 07 | 200 `TokenOut` ; 429 | Verrouillage en **423** (ADR-008 : 429 prévu) ; réponse de défi MFA possible ; `mfa_setup_required` |
 | `POST /auth/refresh` · `POST /auth/logout` | A-AUTH-02 | §7.1 | Conformes (cookie `ql_refresh`, chemin `/api/v1/auth`) |
 | `GET /auth/me` | — | Absente du contrat | **Ajoutée** : `role`, `is_email_verified`, `mfa_enabled`, `store_ids` |
+| `PATCH /auth/me` | A-PRV-01 | §10.1 : `PUT /me` | **`PATCH`** (modification partielle) sous `/auth` ; champs `first_name`, `last_name`, `language`, `marketing_opt_in` ; courriel, rôle et mot de passe refusés (422) ; consentement marketing tracé dans `consents` ; `GET /auth/me` expose `marketing_opt_in` |
 | `POST /auth/password/forgot` · `POST /auth/password/reset` | A-AUTH-04 | 202 · 204 | `reset` renvoie **200** |
 | `POST /auth/mfa/setup` · `/enable` · `/verify` | A-AUTH-06 | §10.2 (L3) | **Implémentées dès le L1** (en avance) |
 | `GET /categories` · `GET /stores` | A-CAT-01, 02 | §7.2 | Conformes (listes non paginées) |

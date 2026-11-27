@@ -26,13 +26,14 @@ from app.schemas.auth import (
     MfaCodeRequest,
     MfaSetupResponse,
     MfaVerifyRequest,
+    ProfileUpdate,
     RegisterRequest,
     ResetPasswordRequest,
     TokenRequest,
     TokenResponse,
     UserResponse,
 )
-from app.services import auth_service, mfa_service
+from app.services import auth_service, mfa_service, profile_service
 
 router = APIRouter(prefix="/auth", tags=["authentification"])
 
@@ -253,9 +254,45 @@ def logout(request: Request, db: Session = Depends(get_db)) -> Response:
     summary="Profil de l'utilisateur connecté",
     responses={**ERR_401_TOKEN, 403: _error("Personnel sans MFA complétée (`mfa_required`).")},
 )
-def me(user: User = Depends(get_current_user)) -> User:
-    """Renvoie le profil et le rôle de l'utilisateur. Nécessite un jeton d'accès (**Authorize** 🔒)."""
-    return user
+def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> UserResponse:
+    """Renvoie le profil et le rôle de l'utilisateur. Nécessite un jeton d'accès (**Authorize** 🔒).
+
+    `marketing_opt_in` indique si le client accepte les courriels promotionnels (A-PRV-01).
+    """
+    return _profile_response(db, user)
+
+
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+    summary="Modifier son profil",
+    responses={
+        **ERR_401_TOKEN,
+        403: _error("Personnel sans MFA complétée (`mfa_required`)."),
+        422: _error("Champ inconnu (p. ex. `email`, `role`), valeur `null` ou valeur invalide."),
+    },
+)
+def update_me(
+    body: ProfileUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> UserResponse:
+    """Modifie le nom, la langue ou la préférence de communication (A-PRV-01). **Modification
+    partielle** : seuls les champs envoyés sont changés, p. ex. `{"language": "en"}`.
+
+    - Le **courriel**, le **rôle** et le **mot de passe** ne sont pas modifiables ici (422).
+    - `marketing_opt_in: true` enregistre un consentement daté; `false` le retire. L'historique des
+      consentements est conservé (Loi 25).
+    - Renvoie le profil à jour, comme `GET /auth/me`.
+    """
+    # Le schéma a déjà refusé les champs interdits; `exclude_unset` ne garde que ceux envoyés.
+    updated = profile_service.update_profile(db, user, body.model_dump(exclude_unset=True))
+    return _profile_response(db, updated)
+
+
+def _profile_response(db: Session, user: User) -> UserResponse:
+    """Profil public de l'utilisateur, avec la préférence marketing lue dans `consents`."""
+    return UserResponse.model_validate(user).model_copy(
+        update={"marketing_opt_in": profile_service.marketing_opt_in(db, user)}
+    )
 
 
 # ---------------------------------------------------------------------------
