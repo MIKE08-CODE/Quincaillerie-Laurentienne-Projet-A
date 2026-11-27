@@ -71,9 +71,24 @@ class RegisterRequest(_Input):
     )
 
 
+# Type de client qui ouvre la session (DEC-02 : session des clients natifs).
+# - "web" (défaut) : jeton de rafraîchissement dans le cookie httpOnly `ql_refresh`, jamais dans le JSON;
+# - "native" (mobile, bureau) : ces applications ne gèrent pas les cookies de façon fiable; le jeton est
+#   renvoyé dans le corps JSON et doit être gardé dans le stockage sécurisé de l'appareil
+#   (Keychain/Keystore via expo-secure-store sur le mobile). Aucun cookie n'est alors posé.
+ClientKind = Annotated[
+    Literal["web", "native"],
+    Field(
+        description="`web` (défaut) : jeton de rafraîchissement en cookie httpOnly. `native` (mobile, "
+        "bureau) : jeton de rafraîchissement renvoyé dans le corps (`refresh_token`), sans cookie.",
+    ),
+]
+
+
 class LoginRequest(_Input):
     email: Email
     password: Password = Field(description="Mot de passe du compte.")
+    client: ClientKind = "web"
 
 
 class EmailRequest(_Input):
@@ -95,6 +110,9 @@ class MfaCodeRequest(_Input):
         description="Code à 6 chiffres affiché par l'application d'authentification.",
         examples=["123456"],
     )
+    # Hérité par MfaVerifyRequest : le personnel qui se connecte depuis le bureau (client natif)
+    # reçoit lui aussi son jeton de rafraîchissement dans le corps (/mfa/enable et /mfa/verify).
+    client: ClientKind = "web"
 
 
 class MfaVerifyRequest(MfaCodeRequest):
@@ -105,12 +123,33 @@ class MfaVerifyRequest(MfaCodeRequest):
     )
 
 
+class RefreshRequest(_Input):
+    """Corps de `/auth/refresh` et `/auth/logout` pour un client natif (DEC-02).
+
+    Le web n'envoie PAS de corps : son jeton voyage dans le cookie. Un corps présent signifie
+    « client natif » : la réponse contiendra alors le nouveau jeton dans le JSON, sans cookie.
+    """
+
+    refresh_token: str = Field(
+        min_length=1,
+        max_length=256,  # un jeton opaque fait 43 caractères : borne anti-abus
+        description="Jeton de rafraîchissement reçu à la connexion (champ `refresh_token`).",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Sorties
 # ---------------------------------------------------------------------------
 class TokenResponse(BaseModel):
-    """Session ouverte. Le jeton de rafraîchissement n'est PAS ici : il voyage seulement dans le
-    cookie httpOnly `ql_refresh`, illisible par JavaScript."""
+    """Session ouverte.
+
+    - Web : le jeton de rafraîchissement n'est PAS dans cette réponse; il voyage seulement dans le
+      cookie httpOnly `ql_refresh`, illisible par JavaScript. Les champs `refresh_token` et
+      `refresh_expires_in` valent None et sont retirés du JSON (`response_model_exclude_none` sur
+      les routes) : la clé n'apparaît donc pas du tout.
+    - Client natif (`client: "native"`, ou jeton envoyé dans le corps de `/refresh`) : le jeton est
+      dans `refresh_token`, et aucun cookie n'est posé.
+    """
 
     access_token: str = Field(
         description="Jeton d'accès (JWT) à envoyer dans l'en-tête `Authorization: Bearer <jeton>`."
@@ -121,6 +160,16 @@ class TokenResponse(BaseModel):
         default=False,
         description="`true` pour le personnel qui n'a pas encore configuré la MFA : ce jeton ne permet "
         "que d'appeler `/auth/mfa/setup` puis `/auth/mfa/enable`.",
+    )
+    refresh_token: str | None = Field(
+        default=None,
+        description="Clients natifs seulement : jeton de rafraîchissement (rotation à chaque "
+        "`/auth/refresh`). À garder dans le stockage sécurisé de l'appareil. Absent pour le web et "
+        "pour la session limitée du personnel sans MFA.",
+    )
+    refresh_expires_in: int | None = Field(
+        default=None,
+        description="Clients natifs seulement : durée de vie du jeton de rafraîchissement, en secondes.",
     )
 
 

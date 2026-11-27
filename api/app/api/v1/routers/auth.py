@@ -26,6 +26,7 @@ from app.schemas.auth import (
     MfaCodeRequest,
     MfaSetupResponse,
     MfaVerifyRequest,
+    RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenRequest,
@@ -83,7 +84,31 @@ def _clear_refresh_cookie(response: Response) -> None:
     )
 
 
-def _token_response(response: Response, session: auth_service.AuthSession) -> TokenResponse:
+def _token_response(
+    response: Response, session: auth_service.AuthSession, *, native: bool = False
+) -> TokenResponse:
+    """Renvoie la session au client, par le bon canal (A-AUTH-02, DEC-02).
+
+    - Web (`native=False`) : le jeton de rafraîchissement part dans le cookie httpOnly; il n'est
+      JAMAIS mis dans le JSON (un script injecté dans la page ne peut donc pas le lire).
+    - Client natif (`native=True`) : le jeton part dans le JSON (`refresh_token`) et AUCUN cookie
+      n'est posé. Le mobile le garde dans son stockage sécurisé.
+
+    Règle de sécurité : on ne convertit jamais un cookie en JSON. `native` vaut vrai seulement si
+    le client l'a demandé à la connexion (`client: "native"`) ou a lui-même envoyé son jeton dans
+    le corps de /refresh. Sinon, un XSS sur le web appellerait /refresh (le navigateur joint le
+    cookie tout seul) et lirait le nouveau jeton dans la réponse.
+
+    Session limitée du personnel sans MFA : `refresh_token` est None dans les deux modes.
+    """
+    if native:
+        return TokenResponse(
+            access_token=session.access_token,
+            expires_in=session.expires_in,
+            mfa_setup_required=session.mfa_setup_required,
+            refresh_token=session.refresh_token,
+            refresh_expires_in=session.refresh_expires_in if session.refresh_token else None,
+        )
     if session.refresh_token:
         _set_refresh_cookie(response, session.refresh_token, session.refresh_expires_in)
     return TokenResponse(
@@ -174,6 +199,8 @@ def resend_verification(
 @router.post(
     "/login",
     response_model=TokenResponse | MfaChallengeResponse,
+    # Retire `refresh_token: null` du JSON : la réponse web reste strictement identique.
+    response_model_exclude_none=True,
     summary="Se connecter",
     responses={
         200: {
@@ -201,48 +228,82 @@ def login(
       cookie**. Ce jeton ne sert qu'à `/mfa/setup` puis `/mfa/enable`.
     - **Compte avec MFA** : `mfa_required: true` + `mfa_token`, à envoyer à `/mfa/verify` avec le code.
 
+    **Applications mobile et bureau** : envoyer `"client": "native"`. Le jeton de rafraîchissement est
+    alors renvoyé dans `refresh_token` (à garder dans le stockage sécurisé de l'appareil), sans cookie.
+
     **Verrouillage progressif** : après 5 échecs, le compte est bloqué 15 minutes (423), puis 30, puis 60…
     Pendant le blocage, même le bon mot de passe est refusé.
     Limite : 10 requêtes par minute par adresse IP.
     """
     result = auth_service.login(db, email=body.email, password=body.password.get_secret_value())
     if isinstance(result, auth_service.MfaChallenge):
+        # Pas de jeton de rafraîchissement à ce stade : le mode natif sera demandé à /mfa/verify.
         return MfaChallengeResponse(mfa_token=result.mfa_token)
-    return _token_response(response, result)
+    return _token_response(response, result, native=body.client == "native")
 
 
 @router.post(
     "/refresh",
     response_model=TokenResponse,
+    response_model_exclude_none=True,  # le web ne voit jamais de clé `refresh_token`
     summary="Obtenir un nouveau jeton d'accès",
     responses={
-        401: _error("Cookie absent, expiré ou révoqué (`invalid_refresh_token`) : il faut se reconnecter."),
+        401: _error("Jeton absent, expiré ou révoqué (`invalid_refresh_token`) : il faut se reconnecter."),
+        **ERR_422,
         **ERR_429,
     },
 )
 @limiter.limit(rate_limit.REFRESH_LIMIT)
-def refresh(request: Request, response: Response, db: Session = Depends(get_db)) -> TokenResponse:
-    """Échange le cookie `ql_refresh` contre un nouveau jeton d'accès. **Aucun corps à envoyer** :
-    le navigateur joint le cookie automatiquement (côté web : `fetch(..., {credentials: "include"})`).
+def refresh(
+    request: Request,
+    response: Response,
+    body: RefreshRequest | None = None,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    """Échange le jeton de rafraîchissement contre un nouveau jeton d'accès.
 
-    - **Rotation** : chaque appel remplace le cookie par un nouveau; l'ancien devient inutilisable.
-    - Si un ancien cookie est présenté de nouveau (signe de vol), **toutes les sessions** de
+    - **Web** : **aucun corps à envoyer**; le navigateur joint le cookie `ql_refresh`
+      automatiquement (`fetch(..., {credentials: "include"})`). Le nouveau jeton revient en cookie.
+    - **Mobile et bureau** : envoyer `{"refresh_token": "…"}`. Le nouveau jeton revient dans
+      `refresh_token` (le remplacer dans le stockage sécurisé), sans cookie.
+
+    - **Rotation** : chaque appel remplace le jeton par un nouveau; l'ancien devient inutilisable.
+    - Si un ancien jeton est présenté de nouveau (signe de vol), **toutes les sessions** de
       l'utilisateur sont fermées.
     - Une session dure au plus 30 jours, même si elle est rafraîchie régulièrement.
     """
+    if body is not None:
+        # Client natif : il a envoyé son jeton lui-même, il le reçoit en retour dans le JSON.
+        # Le cookie éventuel est ignoré et n'est pas modifié.
+        session = auth_service.refresh_session(db, body.refresh_token)
+        return _token_response(response, session, native=True)
+    # Web : jeton lu dans le cookie, nouveau jeton renvoyé en cookie SEULEMENT (jamais en JSON).
     session = auth_service.refresh_session(db, request.cookies.get(REFRESH_COOKIE))
     return _token_response(response, session)
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Se déconnecter")
-def logout(request: Request, db: Session = Depends(get_db)) -> Response:
-    """Révoque le jeton de rafraîchissement (cookie `ql_refresh`) et efface le cookie.
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Se déconnecter",
+    responses=ERR_422,
+)
+def logout(request: Request, body: RefreshRequest | None = None, db: Session = Depends(get_db)) -> Response:
+    """Révoque le jeton de rafraîchissement.
 
-    Réussit toujours (204), même sans cookie. Le client doit aussi oublier son jeton d'accès,
+    - **Web** : aucun corps; le jeton du cookie `ql_refresh` est révoqué et le cookie effacé.
+    - **Mobile et bureau** : envoyer `{"refresh_token": "…"}`, puis effacer le jeton du stockage
+      sécurisé de l'appareil.
+
+    Réussit toujours (204), même sans jeton. Le client doit aussi oublier son jeton d'accès,
     qui reste techniquement valide jusqu'à son expiration (15 min au plus).
     """
-    auth_service.logout(db, request.cookies.get(REFRESH_COOKIE))
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    if body is not None:
+        # Client natif : on révoque le jeton reçu; aucun cookie à effacer.
+        auth_service.logout(db, body.refresh_token)
+        return response
+    auth_service.logout(db, request.cookies.get(REFRESH_COOKIE))
     _clear_refresh_cookie(response)
     return response
 
@@ -335,6 +396,7 @@ def mfa_setup(
 @router.post(
     "/mfa/enable",
     response_model=TokenResponse,
+    response_model_exclude_none=True,  # pas de clé `refresh_token` pour le web
     summary="MFA, étape 2 : activer avec un premier code",
     responses={
         401: _error("Code invalide (`invalid_mfa_code`) ou jeton absent/expiré."),
@@ -358,12 +420,14 @@ def mfa_enable(
 
     Les codes erronés comptent dans le verrouillage du compte (5 échecs → blocage).
     """
-    return _token_response(response, mfa_service.enable(db, principal.user, body.code))
+    session = mfa_service.enable(db, principal.user, body.code)
+    return _token_response(response, session, native=body.client == "native")
 
 
 @router.post(
     "/mfa/verify",
     response_model=TokenResponse,
+    response_model_exclude_none=True,  # pas de clé `refresh_token` pour le web
     summary="Se connecter, étape 2 : saisir le code MFA",
     responses={
         401: _error("Code invalide (`invalid_mfa_code`) ou `mfa_token` expiré (`invalid_mfa_token`)."),
@@ -381,4 +445,5 @@ def mfa_verify(
 
     Un même code ne peut servir qu'**une seule fois**. Les codes erronés comptent dans le verrouillage.
     """
-    return _token_response(response, mfa_service.verify_challenge(db, body.mfa_token, body.code))
+    session = mfa_service.verify_challenge(db, body.mfa_token, body.code)
+    return _token_response(response, session, native=body.client == "native")

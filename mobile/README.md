@@ -20,6 +20,23 @@ React Native Testing Library.
 | États | Indicateur de chargement, message d'erreur (réseau ou API) avec « Réessayer », liste vide |
 | Prix | Cents → dollars canadiens localisés (`19,99 $` / `$19.99`) |
 
+## Session (L2, ADR-010)
+
+L'API propose un mode « client natif » : le jeton de rafraîchissement est échangé dans le corps JSON,
+jamais en cookie ([ADR-010](../docs/adr/0010-session-clients-natifs.md)). Côté API : implémenté et
+testé ; **intégration dans l'application à réaliser**.
+
+| Étape | Appel | À faire dans l'application |
+|---|---|---|
+| Connexion | `POST /auth/login` avec `{"email", "password", "client": "native"}` | Garder `access_token` **en mémoire** ; enregistrer `refresh_token` avec `expo-secure-store` |
+| Rafraîchissement | `POST /auth/refresh` avec `{"refresh_token": "…"}` | Sur une réponse 401 `invalid_token`, rafraîchir une fois puis rejouer la requête ; **remplacer** le jeton stocké (rotation : l'ancien ne fonctionne plus) |
+| Lancement de l'app | `POST /auth/refresh` avec le jeton stocké | Restaurer la session ; si 401 `invalid_refresh_token`, effacer le jeton et afficher la connexion |
+| Déconnexion | `POST /auth/logout` avec `{"refresh_token": "…"}` | Effacer le jeton du stockage sécurisé, puis oublier le jeton d'accès |
+
+- Ne **jamais** écrire le jeton de rafraîchissement dans `AsyncStorage`, les journaux ou un message d'erreur.
+- Une session dure au plus 30 jours ; une réinitialisation du mot de passe la ferme sur tous les appareils.
+- Un jeton déjà utilisé qui revient est considéré comme volé : l'API ferme toutes les sessions du compte.
+
 ## Configuration de l'URL de l'API par environnement
 
 L'URL est lue dans `EXPO_PUBLIC_API_BASE_URL` au moment du bundle (préfixe `/api/v1` inclus). Copier

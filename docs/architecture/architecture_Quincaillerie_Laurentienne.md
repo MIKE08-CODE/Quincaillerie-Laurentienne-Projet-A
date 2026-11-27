@@ -145,6 +145,7 @@ Les trois décisions initiales sont **conservées**. Leur statut demeure **Propo
 | ADR-006 | Recherche plein texte | Colonne générée + configurations `*_unaccent` ([fichier](../adr/0006-recherche-plein-texte.md)). | Accepté (O9) |
 | ADR-007 | React 19 sur le mobile | Imposé par Expo SDK 58 ; web en React 18 ([fichier](../adr/0007-react-19-mobile-expo.md)). | Proposé |
 | ADR-008 | Format des erreurs | `ErrorOut` et `X-Request-ID` ([fichier](../adr/0008-format-uniforme-des-erreurs.md)) — non implémenté. | Accepté (D1), à réaliser |
+| ADR-010 | Session des clients natifs | Jeton de rafraîchissement dans le corps sur demande du mobile et du bureau ; jamais un cookie converti en JSON ([fichier](../adr/0010-session-clients-natifs.md)). | Proposé (implémenté) |
 
 ### ADR-001 — Stratégie de verrouillage du stock
 

@@ -218,9 +218,9 @@ Portée de L1 d’après A.11 : A-AUTH-01 à 05 et 07, A-CAT-01 à 03, A-ADM-01,
 | Route | Accès | Exigences | Requête | Succès | Erreurs |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | `POST /auth/register` | Public | A-AUTH-01, A-AUTH-03 | `RegisterIn` | 201 `UserOut` | 409, 422, 429 |
-| `POST /auth/login` | Public | A-AUTH-02, A-AUTH-07 | `LoginIn` | 200 `TokenOut` \+ cookie de rafraîchissement | 401, 422, 429 |
-| `POST /auth/refresh` | Cookie de rafraîchissement | A-AUTH-02 | (cookie) | 200 `TokenOut` \+ nouveau cookie | 401 |
-| `POST /auth/logout` | Connecté | A-AUTH-02 | (aucune) | 204, jeton de rafraîchissement révoqué | 401 |
+| `POST /auth/login` | Public | A-AUTH-02, A-AUTH-07 | `LoginIn` (`client` : `web` par défaut ou `native`, ADR-010) | 200 `TokenOut` \+ cookie de rafraîchissement (web) ; `refresh_token` dans le corps, sans cookie (natif) | 401, 422, 429 |
+| `POST /auth/refresh` | Cookie de rafraîchissement (web) ou jeton dans le corps (natif) | A-AUTH-02 | (cookie) ou `{"refresh_token"}` | 200 `TokenOut` \+ nouveau cookie (web) ; nouveau `refresh_token` dans le corps (natif) | 401, 422 |
+| `POST /auth/logout` | Connecté | A-AUTH-02 | (aucune) ou `{"refresh_token"}` (natif) | 204, jeton de rafraîchissement révoqué | 401, 422 |
 | `POST /auth/password/forgot` | Public | A-AUTH-04 | `ForgotPasswordIn` | 202, même réponse que le courriel existe ou non | 422, 429 |
 | `POST /auth/password/reset` | Public | A-AUTH-03, A-AUTH-04 | `ResetPasswordIn` | 204 | 400, 422, 429 |
 
@@ -554,8 +554,8 @@ Des filtres supplémentaires sur `GET /products` (fourchette de prix, marque, di
 | Client | Authentification cible | Points à confirmer |
 | :--- | :--- | :--- |
 | Web React/Vite | Jeton d'accès Bearer ; rafraîchissement via cookie `HttpOnly` | CORS avec identifiants, `SameSite`, CSRF, domaine et HTTPS |
-| Mobile React Native/Expo | Jeton d'accès Bearer ; stockage sécurisé natif des secrets de session | Flux de rafraîchissement adapté à l'application native |
-| Bureau C# WPF/.NET 8 | Jeton d'accès Bearer ; stockage protégé par le système d'exploitation | Gestion de session, révocation et renouvellement |
+| Mobile React Native/Expo | Jeton d'accès Bearer en mémoire ; `client: "native"` à la connexion, jeton de rafraîchissement dans le corps, stocké dans `expo-secure-store` (ADR-010) | Implémenté côté API ; intégration dans l'application mobile à réaliser |
+| Bureau C# WPF/.NET 8 | Jeton d'accès Bearer ; même mode natif que le mobile, y compris `/auth/mfa/enable` et `/auth/mfa/verify` (ADR-010) ; stockage protégé par le système d'exploitation | Mécanisme de stockage (p. ex. DPAPI) à préciser par l'équipe du bureau |
 
 **Principe conservé :** les trois clients consomment l'API ; aucun n'accède directement à PostgreSQL. Les modalités natives sont des propositions à valider, pas des mécanismes attestés.
 
@@ -568,7 +568,7 @@ Des filtres supplémentaires sur `GET /products` (fourchette de prix, marque, di
 | VER-03 | Gestionnaire d'erreurs `ErrorOut` / 422 | Vérification | En attente |
 | VER-04 | Application effective des limites de débit et en-têtes | Vérification | En attente |
 | DEC-01 | `SameSite`, CSRF, rotation/révocation et stratégie Web | Décision / vérification | À valider |
-| DEC-02 | Stratégies de session Mobile et Bureau | Décision | À valider |
+| DEC-02 | Stratégies de session Mobile et Bureau | Décision | **Tranchée par l'ADR-010** (jeton de rafraîchissement dans le corps sur demande du client natif) ; approbation du responsable à obtenir |
 | DEC-03 | `PUT` complet ou `PATCH` partiel pour les produits | Décision | À valider |
 | DEC-04 | Méthodes et schémas CRUD des catégories | Décision | À valider |
 | VER-05 | Références `A-D*` et liens vers exigences officielles | Vérification documentaire | En attente |
@@ -582,6 +582,7 @@ Des filtres supplémentaires sur `GET /products` (fourchette de prix, marque, di
 | 1.1 | 2026-11-21 | Clarification des statuts, sécurité, pagination, erreurs, traçabilité et validation OpenAPI ; routes et choix de base conservés |
 | 1.2 | 2026-11-21 | Extension du contrat aux domaines L2/L3 : méthodes, schémas, erreurs, règles métier, exemples et traçabilité ; sans présumer de leur implémentation |
 | 1.3 | 2026-11-21 | Conformité à l'OpenAPI réellement généré (§18) : routes implémentées et prévues, écarts consignés ; `PATCH` (DEC-03) et CRUD catégories/marques (DEC-04) tranchés |
+| 1.4 | 2026-11-27 | Session des clients natifs (ADR-010) : `client` à la connexion, `refresh_token` dans le corps de `/auth/refresh` et `/auth/logout` ; DEC-02 tranchée |
 
 **Validation finale conditionnelle :** (1) confirmer les exigences et décisions ouvertes, (2) comparer le contrat au schéma FastAPI généré, (3) rattacher tests et preuves CI, (4) faire approuver la version par le responsable du projet. L'absence de ces preuves n'empêche pas la revue documentaire, mais interdit de déclarer le contrat techniquement vérifié.
 
@@ -862,7 +863,7 @@ Source : `GET /openapi.json` de l'API exécutée au commit `852486c` (branche `f
 | `POST /auth/register` | A-AUTH-01 | §7.1 : 201 `UserOut` | **202** et message générique (pas d'énumération) ; champ `accept_privacy_policy` (+ `marketing_opt_in`) |
 | `POST /auth/verify-email` · `POST /auth/verify-email/resend` | A-AUTH-01 | §7.5 : 204 | **200** ; route `resend` ajoutée |
 | `POST /auth/login` | A-AUTH-02, 07 | 200 `TokenOut` ; 429 | Verrouillage en **423** (ADR-008 : 429 prévu) ; réponse de défi MFA possible ; `mfa_setup_required` |
-| `POST /auth/refresh` · `POST /auth/logout` | A-AUTH-02 | §7.1 | Conformes (cookie `ql_refresh`, chemin `/api/v1/auth`) |
+| `POST /auth/refresh` · `POST /auth/logout` | A-AUTH-02 | §7.1 | Conformes (cookie `ql_refresh`, chemin `/api/v1/auth`) ; corps `{"refresh_token"}` accepté pour les clients natifs (ADR-010) |
 | `GET /auth/me` | — | Absente du contrat | **Ajoutée** : `role`, `is_email_verified`, `mfa_enabled`, `store_ids` |
 | `POST /auth/password/forgot` · `POST /auth/password/reset` | A-AUTH-04 | 202 · 204 | `reset` renvoie **200** |
 | `POST /auth/mfa/setup` · `/enable` · `/verify` | A-AUTH-06 | §10.2 (L3) | **Implémentées dès le L1** (en avance) |
