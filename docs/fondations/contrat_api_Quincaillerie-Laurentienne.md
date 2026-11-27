@@ -503,8 +503,8 @@ Elles proviennent de la liste A.7. Les jalons suivent la portée de L2 et de L3 
 
 | Route | Accès | Exigences | Objet |
 | :---- | :---- | :---- | :---- |
-| `GET/PUT /cart` | Client | A-ORD-01, A-ORD-02 | Panier côté serveur et magasin de cueillette |
-| `POST /cart/items`, `DELETE /cart/items/{id}` | Client | A-ORD-01, RA-A-07 | Ajouter ou retirer un article (quantité de 1 à 20\) |
+| `GET/PUT /cart` | Client | A-ORD-01, A-ORD-02 | Panier côté serveur et magasin de cueillette — **implémenté** (#70) |
+| `POST /cart/items`, `DELETE /cart/items/{id}` | Client | A-ORD-01, RA-A-07 | Ajouter ou retirer un article (quantité de 1 à 20\) — **implémenté**, plus `PATCH /cart/items/{id}` (#70) |
 | `POST /checkout` | Client | A-ORD-03, A-ORD-04 | Recalcul des prix, réservation du stock, intention de paiement |
 | `POST /webhooks/stripe` | Stripe seulement | A-ORD-05, A-ORD-06 | Confirmation de paiement; en-tête `Stripe-Signature` vérifié; traitement idempotent |
 | `GET /orders`, `GET /orders/{id}` | Client (propriétaire) | A-ORD-07 | Historique et détail des commandes |
@@ -867,6 +867,7 @@ Source : `GET /openapi.json` de l'API exécutée au commit `852486c` (branche `f
 | `POST /auth/password/forgot` · `POST /auth/password/reset` | A-AUTH-04 | 202 · 204 | `reset` renvoie **200** |
 | `POST /auth/mfa/setup` · `/enable` · `/verify` | A-AUTH-06 | §10.2 (L3) | **Implémentées dès le L1** (en avance) |
 | `GET /categories` · `GET /stores` | A-CAT-01, 02 | §7.2 | Conformes (listes non paginées) |
+| `GET/PUT /cart` · `POST /cart/items` · `PATCH`/`DELETE /cart/items/{id}` | A-ORD-01, 02, 03, RA-A-07 | §10.1 | **`PATCH /cart/items/{id}` ajoutée** (quantité exacte). Clients seulement (403 pour le personnel). Chaque route renvoie le panier complet (`CartOut`) : prix actuels en cents, sous-total sans taxes, `is_available` et `unavailable_reason` (`no_store_selected`, `insufficient_stock`, `product_inactive`) sans quantité en stock. `POST` additionne les quantités (au-delà de 20 : 422 `quantity_limit`) ; tout champ prix est refusé (422) ; article d'un autre client → 404 `cart_item_not_found`. `GET` d'un panier inexistant : panier vide, sans création |
 | `GET /products` | A-CAT-01 | §7.2 | Conforme ; paramètres ajoutés : `lang` (tri par nom), `brand_id` (A-CAT-04) ; catégorie inconnue → 404 |
 | `GET /products/{id}` · `/availability` | A-CAT-02 | §7.2 | Conformes ; aucune quantité exposée |
 | `GET /search` | A-CAT-03 | §7.2 | Conforme (`q` de 1 à 100 caractères) |

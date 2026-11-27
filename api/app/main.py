@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1.routers import admin_catalog, auth, catalog
+from app.api.v1.routers import admin_catalog, auth, cart, catalog
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.rate_limit import limiter
@@ -66,6 +66,11 @@ TAGS_METADATA = [
         "name": "administration du catalogue",
         "description": "Produits, images, catégories et marques (A-ADM-01). "
         "Rôle administrateur et MFA requis.",
+    },
+    {
+        "name": "panier",
+        "description": "Panier côté serveur, le même sur le web et le mobile (A-ORD-01, A-ORD-02). "
+        "Clients seulement; les prix viennent toujours de la base.",
     },
     {"name": "santé", "description": "Surveillance de l'API par l'hébergeur."},
 ]
@@ -173,6 +178,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router, prefix=API_V1_PREFIX)
     app.include_router(catalog.router, prefix=API_V1_PREFIX)
     app.include_router(admin_catalog.router, prefix=API_V1_PREFIX)
+    app.include_router(cart.router, prefix=API_V1_PREFIX)
 
     return app
 
